@@ -1,9 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "ccbPb+pvRQ0=",
+  "dgSpecHash": "5ifYkoIe7KM=",
   "success": true,
   "projectFilePath": "C:\\Users\\kryst\\Desktop\\Praca magisterska\\st-grammar\\ST_Tests\\ST_Tests.csproj",
   "expectedPackageFiles": [
+    "C:\\Users\\kryst\\.nuget\\packages\\antlr4.runtime.standard\\4.13.1\\antlr4.runtime.standard.4.13.1.nupkg.sha512",
     "C:\\Users\\kryst\\.nuget\\packages\\coverlet.collector\\6.0.0\\coverlet.collector.6.0.0.nupkg.sha512",
     "C:\\Users\\kryst\\.nuget\\packages\\microsoft.codecoverage\\17.8.0\\microsoft.codecoverage.17.8.0.nupkg.sha512",
     "C:\\Users\\kryst\\.nuget\\packages\\microsoft.net.test.sdk\\17.8.0\\microsoft.net.test.sdk.17.8.0.nupkg.sha512",

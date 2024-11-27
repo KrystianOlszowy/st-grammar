@@ -1,0 +1,56 @@
+(*$IMPORT Basic_blocks
+filename: 'C:\Program Files (x86)\CPDev\Biblioteki\Basic_blocks.lcp'
+version: '0.3.1.0'
+timestamp: '2024-09-15-12:52:02.831'
+funs: RND
+fblks: AMEM, ASWI, BMEM, BSWI, COMP, DEBA, DELS, DFF, DIFR, DIVI, FILT, GENR, JKFF, LIMT, MAT, MIT, PDUR, RAND, RSFF, SQR, SRFF, TFF, TOTI
+*)
+(* GLOBAL VARIABLES *)
+VAR_GLOBAL (*$INPUTMARK*) 
+ START AT %0000 (*$COMMENT Sygnał włączenia silnika*) : BOOL := 0;
+END_VAR
+
+VAR_GLOBAL (*$INPUTMARK*) 
+ STOP AT %0001 (*$COMMENT Sygnał wyłączenia silnika*) : BOOL := 0;
+END_VAR
+
+VAR_GLOBAL (*$INPUTMARK*) 
+ ALARM AT %0002 (*$COMMENT Sygnał alarmowy*) : BOOL := 0;
+END_VAR
+
+VAR_GLOBAL (*$OUTPUTMARK*) 
+ SILNIK AT %0008 (*$COMMENT Sterowanie silnikiem*) : BOOL := 0;
+END_VAR
+
+VAR_GLOBAL (*$OUTPUTMARK*) 
+ POMPA AT %0009 (*$COMMENT Sterowanie pompą*) : BOOL := 0;
+END_VAR
+
+(* USER POUs *)
+PROGRAM MAIN
+ VAR_EXTERNAL
+ START        : BOOL (*$READ*);
+ STOP         : BOOL (*$READ*);
+ ALARM        : BOOL (*$READ*);
+ SILNIK       : BOOL;
+ POMPA        : BOOL (*$WRITE*);
+ END_VAR
+ 
+ VAR
+    DELAY_ON  : TON;  (* Instnacja bloku TON *)
+    DELAY_OFF : TOF;
+ END_VAR
+ 
+      SILNIK := (START OR SILNIK) AND NOT STOP AND NOT ALARM;
+      DELAY_ON(IN:=SILNIK, PT:=t#5s);
+      DELAY_OFF(IN:=DELAY_ON.Q, PT:=t#5s);
+      POMPA := DELAY_OFF.Q;
+END_PROGRAM
+
+(*$TASKS 
+.TASK TASK1
+.LOOPPARAM 0 200
+MAIN
+.END_TASK
+*)
+(*$END_LIBRARY*)

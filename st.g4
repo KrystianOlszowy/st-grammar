@@ -2,20 +2,14 @@ grammar st;
 /*
  * Parser Rules
  */
-chat                : line line EOF ;
-line                : name SAYS opinion NEWLINE;
-name                : WORD ;
-opinion             : TEXT ;
+file        : PROGRAM WHITESPACE PROGRAM_NAME WHITESPACE var_init program END_PROGRAM;
+var_init    : ;
+program     : ;
+
 /*
  * Lexer Rules
  */
-fragment A          : ('A'|'a') ;
-fragment S          : ('S'|'s') ;
-fragment Y          : ('Y'|'y') ;
-fragment LOWERCASE  : [a-z] ;
-fragment UPPERCASE  : [A-Z] ;
-SAYS                : S A Y S ;
-WORD                : (LOWERCASE | UPPERCASE)+ ;
-TEXT                : '"' .*? '"' ;
+PROGRAM             : 'PROGRAM';
+END_PROGRAM         : 'END_PROGRAM';
+PROGRAM_NAME        : [ a-z | A-Z | _ ];
 WHITESPACE          : (' '|'\t')+ -> skip ;
-NEWLINE             : ('\r'? '\n' | '\r')+ ;

@@ -36,17 +36,18 @@ public partial class stParser : Parser {
 	protected static DFA[] decisionToDFA;
 	protected static PredictionContextCache sharedContextCache = new PredictionContextCache();
 	public const int
-		SAYS=1, WORD=2, TEXT=3, WHITESPACE=4, NEWLINE=5;
+		PROGRAM=1, END_PROGRAM=2, PROGRAM_NAME=3, WHITESPACE=4;
 	public const int
-		RULE_chat = 0, RULE_line = 1, RULE_name = 2, RULE_opinion = 3;
+		RULE_file = 0, RULE_var_init = 1, RULE_program = 2;
 	public static readonly string[] ruleNames = {
-		"chat", "line", "name", "opinion"
+		"file", "var_init", "program"
 	};
 
 	private static readonly string[] _LiteralNames = {
+		null, "'PROGRAM'", "'END_PROGRAM'"
 	};
 	private static readonly string[] _SymbolicNames = {
-		null, "SAYS", "WORD", "TEXT", "WHITESPACE", "NEWLINE"
+		null, "PROGRAM", "END_PROGRAM", "PROGRAM_NAME", "WHITESPACE"
 	};
 	public static readonly IVocabulary DefaultVocabulary = new Vocabulary(_LiteralNames, _SymbolicNames);
 
@@ -80,90 +81,54 @@ public partial class stParser : Parser {
 		Interpreter = new ParserATNSimulator(this, _ATN, decisionToDFA, sharedContextCache);
 	}
 
-	public partial class ChatContext : ParserRuleContext {
-		[System.Diagnostics.DebuggerNonUserCode] public LineContext[] line() {
-			return GetRuleContexts<LineContext>();
+	public partial class FileContext : ParserRuleContext {
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode PROGRAM() { return GetToken(stParser.PROGRAM, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode[] WHITESPACE() { return GetTokens(stParser.WHITESPACE); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode WHITESPACE(int i) {
+			return GetToken(stParser.WHITESPACE, i);
 		}
-		[System.Diagnostics.DebuggerNonUserCode] public LineContext line(int i) {
-			return GetRuleContext<LineContext>(i);
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode PROGRAM_NAME() { return GetToken(stParser.PROGRAM_NAME, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public Var_initContext var_init() {
+			return GetRuleContext<Var_initContext>(0);
 		}
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode Eof() { return GetToken(stParser.Eof, 0); }
-		public ChatContext(ParserRuleContext parent, int invokingState)
+		[System.Diagnostics.DebuggerNonUserCode] public ProgramContext program() {
+			return GetRuleContext<ProgramContext>(0);
+		}
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode END_PROGRAM() { return GetToken(stParser.END_PROGRAM, 0); }
+		public FileContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
 		{
 		}
-		public override int RuleIndex { get { return RULE_chat; } }
+		public override int RuleIndex { get { return RULE_file; } }
 		[System.Diagnostics.DebuggerNonUserCode]
 		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
 			IstVisitor<TResult> typedVisitor = visitor as IstVisitor<TResult>;
-			if (typedVisitor != null) return typedVisitor.VisitChat(this);
+			if (typedVisitor != null) return typedVisitor.VisitFile(this);
 			else return visitor.VisitChildren(this);
 		}
 	}
 
 	[RuleVersion(0)]
-	public ChatContext chat() {
-		ChatContext _localctx = new ChatContext(Context, State);
-		EnterRule(_localctx, 0, RULE_chat);
+	public FileContext file() {
+		FileContext _localctx = new FileContext(Context, State);
+		EnterRule(_localctx, 0, RULE_file);
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
+			State = 6;
+			Match(PROGRAM);
+			State = 7;
+			Match(WHITESPACE);
 			State = 8;
-			line();
+			Match(PROGRAM_NAME);
 			State = 9;
-			line();
+			Match(WHITESPACE);
 			State = 10;
-			Match(Eof);
-			}
-		}
-		catch (RecognitionException re) {
-			_localctx.exception = re;
-			ErrorHandler.ReportError(this, re);
-			ErrorHandler.Recover(this, re);
-		}
-		finally {
-			ExitRule();
-		}
-		return _localctx;
-	}
-
-	public partial class LineContext : ParserRuleContext {
-		[System.Diagnostics.DebuggerNonUserCode] public NameContext name() {
-			return GetRuleContext<NameContext>(0);
-		}
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode SAYS() { return GetToken(stParser.SAYS, 0); }
-		[System.Diagnostics.DebuggerNonUserCode] public OpinionContext opinion() {
-			return GetRuleContext<OpinionContext>(0);
-		}
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode NEWLINE() { return GetToken(stParser.NEWLINE, 0); }
-		public LineContext(ParserRuleContext parent, int invokingState)
-			: base(parent, invokingState)
-		{
-		}
-		public override int RuleIndex { get { return RULE_line; } }
-		[System.Diagnostics.DebuggerNonUserCode]
-		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
-			IstVisitor<TResult> typedVisitor = visitor as IstVisitor<TResult>;
-			if (typedVisitor != null) return typedVisitor.VisitLine(this);
-			else return visitor.VisitChildren(this);
-		}
-	}
-
-	[RuleVersion(0)]
-	public LineContext line() {
-		LineContext _localctx = new LineContext(Context, State);
-		EnterRule(_localctx, 2, RULE_line);
-		try {
-			EnterOuterAlt(_localctx, 1);
-			{
+			var_init();
+			State = 11;
+			program();
 			State = 12;
-			name();
-			State = 13;
-			Match(SAYS);
-			State = 14;
-			opinion();
-			State = 15;
-			Match(NEWLINE);
+			Match(END_PROGRAM);
 			}
 		}
 		catch (RecognitionException re) {
@@ -177,30 +142,27 @@ public partial class stParser : Parser {
 		return _localctx;
 	}
 
-	public partial class NameContext : ParserRuleContext {
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode WORD() { return GetToken(stParser.WORD, 0); }
-		public NameContext(ParserRuleContext parent, int invokingState)
+	public partial class Var_initContext : ParserRuleContext {
+		public Var_initContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
 		{
 		}
-		public override int RuleIndex { get { return RULE_name; } }
+		public override int RuleIndex { get { return RULE_var_init; } }
 		[System.Diagnostics.DebuggerNonUserCode]
 		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
 			IstVisitor<TResult> typedVisitor = visitor as IstVisitor<TResult>;
-			if (typedVisitor != null) return typedVisitor.VisitName(this);
+			if (typedVisitor != null) return typedVisitor.VisitVar_init(this);
 			else return visitor.VisitChildren(this);
 		}
 	}
 
 	[RuleVersion(0)]
-	public NameContext name() {
-		NameContext _localctx = new NameContext(Context, State);
-		EnterRule(_localctx, 4, RULE_name);
+	public Var_initContext var_init() {
+		Var_initContext _localctx = new Var_initContext(Context, State);
+		EnterRule(_localctx, 2, RULE_var_init);
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 17;
-			Match(WORD);
 			}
 		}
 		catch (RecognitionException re) {
@@ -214,30 +176,27 @@ public partial class stParser : Parser {
 		return _localctx;
 	}
 
-	public partial class OpinionContext : ParserRuleContext {
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode TEXT() { return GetToken(stParser.TEXT, 0); }
-		public OpinionContext(ParserRuleContext parent, int invokingState)
+	public partial class ProgramContext : ParserRuleContext {
+		public ProgramContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
 		{
 		}
-		public override int RuleIndex { get { return RULE_opinion; } }
+		public override int RuleIndex { get { return RULE_program; } }
 		[System.Diagnostics.DebuggerNonUserCode]
 		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
 			IstVisitor<TResult> typedVisitor = visitor as IstVisitor<TResult>;
-			if (typedVisitor != null) return typedVisitor.VisitOpinion(this);
+			if (typedVisitor != null) return typedVisitor.VisitProgram(this);
 			else return visitor.VisitChildren(this);
 		}
 	}
 
 	[RuleVersion(0)]
-	public OpinionContext opinion() {
-		OpinionContext _localctx = new OpinionContext(Context, State);
-		EnterRule(_localctx, 6, RULE_opinion);
+	public ProgramContext program() {
+		ProgramContext _localctx = new ProgramContext(Context, State);
+		EnterRule(_localctx, 4, RULE_program);
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 19;
-			Match(TEXT);
 			}
 		}
 		catch (RecognitionException re) {
@@ -252,11 +211,11 @@ public partial class stParser : Parser {
 	}
 
 	private static int[] _serializedATN = {
-		4,1,5,22,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,1,0,1,0,1,0,1,0,1,1,1,1,1,1,1,
-		1,1,1,1,2,1,2,1,3,1,3,1,3,0,0,4,0,2,4,6,0,0,17,0,8,1,0,0,0,2,12,1,0,0,
-		0,4,17,1,0,0,0,6,19,1,0,0,0,8,9,3,2,1,0,9,10,3,2,1,0,10,11,5,0,0,1,11,
-		1,1,0,0,0,12,13,3,4,2,0,13,14,5,1,0,0,14,15,3,6,3,0,15,16,5,5,0,0,16,3,
-		1,0,0,0,17,18,5,2,0,0,18,5,1,0,0,0,19,20,5,3,0,0,20,7,1,0,0,0,0
+		4,1,4,19,2,0,7,0,2,1,7,1,2,2,7,2,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,1,1,
+		1,1,2,1,2,1,2,0,0,3,0,2,4,0,0,15,0,6,1,0,0,0,2,14,1,0,0,0,4,16,1,0,0,0,
+		6,7,5,1,0,0,7,8,5,4,0,0,8,9,5,3,0,0,9,10,5,4,0,0,10,11,3,2,1,0,11,12,3,
+		4,2,0,12,13,5,2,0,0,13,1,1,0,0,0,14,15,1,0,0,0,15,3,1,0,0,0,16,17,1,0,
+		0,0,17,5,1,0,0,0,0
 	};
 
 	public static readonly ATN _ATN =

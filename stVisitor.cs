@@ -32,27 +32,21 @@ using IToken = Antlr4.Runtime.IToken;
 [System.CLSCompliant(false)]
 public interface IstVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="stParser.chat"/>.
+	/// Visit a parse tree produced by <see cref="stParser.file"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitChat([NotNull] stParser.ChatContext context);
+	Result VisitFile([NotNull] stParser.FileContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="stParser.line"/>.
+	/// Visit a parse tree produced by <see cref="stParser.var_init"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitLine([NotNull] stParser.LineContext context);
+	Result VisitVar_init([NotNull] stParser.Var_initContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="stParser.name"/>.
+	/// Visit a parse tree produced by <see cref="stParser.program"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitName([NotNull] stParser.NameContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="stParser.opinion"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitOpinion([NotNull] stParser.OpinionContext context);
+	Result VisitProgram([NotNull] stParser.ProgramContext context);
 }
