@@ -28,7 +28,7 @@ PROGRAM MAIN
  END_VAR
  
  VAR
-    DELAY_ON  : TON;  (* Instnacja bloku TON *)
+    DELAY_ON  : TON;  (* Instancja bloku TON *)
     DELAY_OFF : TOF;
  END_VAR
  

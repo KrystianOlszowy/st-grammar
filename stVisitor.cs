@@ -32,21 +32,105 @@ using IToken = Antlr4.Runtime.IToken;
 [System.CLSCompliant(false)]
 public interface IstVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="stParser.file"/>.
+	/// Visit a parse tree produced by <see cref="stParser.project"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitFile([NotNull] stParser.FileContext context);
+	Result VisitProject([NotNull] stParser.ProjectContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="stParser.var_init"/>.
+	/// Visit a parse tree produced by <see cref="stParser.variableBlock"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitVar_init([NotNull] stParser.Var_initContext context);
+	Result VisitVariableBlock([NotNull] stParser.VariableBlockContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.variableBlockKeyword"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitVariableBlockKeyword([NotNull] stParser.VariableBlockKeywordContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.variableDeclaration"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitVariableDeclaration([NotNull] stParser.VariableDeclarationContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.initialValue"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitInitialValue([NotNull] stParser.InitialValueContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="stParser.program"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitProgram([NotNull] stParser.ProgramContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitStatement([NotNull] stParser.StatementContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.assignment"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitAssignment([NotNull] stParser.AssignmentContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.blockCall"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitBlockCall([NotNull] stParser.BlockCallContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.bracketedExppression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitBracketedExppression([NotNull] stParser.BracketedExppressionContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.expression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitExpression([NotNull] stParser.ExpressionContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.negation"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitNegation([NotNull] stParser.NegationContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.operator"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitOperator([NotNull] stParser.OperatorContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.logicalBinaryOperator"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitLogicalBinaryOperator([NotNull] stParser.LogicalBinaryOperatorContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.value"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitValue([NotNull] stParser.ValueContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.variableValue"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitVariableValue([NotNull] stParser.VariableValueContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.dataType"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitDataType([NotNull] stParser.DataTypeContext context);
 }
