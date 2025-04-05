@@ -37,10 +37,4 @@ public interface IstVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitProgram([NotNull] stParser.ProgramContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="stParser.dog"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitDog([NotNull] stParser.DogContext context);
 }
