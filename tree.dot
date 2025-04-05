@@ -1,0 +1,6 @@
+digraph ParseTree {
+node [shape=box, style=filled, color=".7 .3 1.0"];
+node0 [label="program"];
+node1 [label="ID"];
+node0 -> node1;
+}
