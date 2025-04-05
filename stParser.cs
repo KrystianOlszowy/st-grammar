@@ -36,18 +36,18 @@ public partial class stParser : Parser {
 	protected static DFA[] decisionToDFA;
 	protected static PredictionContextCache sharedContextCache = new PredictionContextCache();
 	public const int
-		T__0=1, LINE_COMMENT=2, COMMENT=3, WHITESPACE=4;
+		T__0=1, T__1=2, LINE_COMMENT=3, COMMENT=4, WHITESPACE=5;
 	public const int
-		RULE_program = 0;
+		RULE_program = 0, RULE_dog = 1;
 	public static readonly string[] ruleNames = {
-		"program"
+		"program", "dog"
 	};
 
 	private static readonly string[] _LiteralNames = {
-		null, "'id'"
+		null, "'id'", "'dog'"
 	};
 	private static readonly string[] _SymbolicNames = {
-		null, null, "LINE_COMMENT", "COMMENT", "WHITESPACE"
+		null, null, null, "LINE_COMMENT", "COMMENT", "WHITESPACE"
 	};
 	public static readonly IVocabulary DefaultVocabulary = new Vocabulary(_LiteralNames, _SymbolicNames);
 
@@ -82,6 +82,9 @@ public partial class stParser : Parser {
 	}
 
 	public partial class ProgramContext : ParserRuleContext {
+		[System.Diagnostics.DebuggerNonUserCode] public DogContext dog() {
+			return GetRuleContext<DogContext>(0);
+		}
 		public ProgramContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
 		{
@@ -100,10 +103,61 @@ public partial class stParser : Parser {
 		ProgramContext _localctx = new ProgramContext(Context, State);
 		EnterRule(_localctx, 0, RULE_program);
 		try {
+			State = 6;
+			ErrorHandler.Sync(this);
+			switch (TokenStream.LA(1)) {
+			case T__0:
+				EnterOuterAlt(_localctx, 1);
+				{
+				State = 4;
+				Match(T__0);
+				}
+				break;
+			case T__1:
+				EnterOuterAlt(_localctx, 2);
+				{
+				State = 5;
+				dog();
+				}
+				break;
+			default:
+				throw new NoViableAltException(this);
+			}
+		}
+		catch (RecognitionException re) {
+			_localctx.exception = re;
+			ErrorHandler.ReportError(this, re);
+			ErrorHandler.Recover(this, re);
+		}
+		finally {
+			ExitRule();
+		}
+		return _localctx;
+	}
+
+	public partial class DogContext : ParserRuleContext {
+		public DogContext(ParserRuleContext parent, int invokingState)
+			: base(parent, invokingState)
+		{
+		}
+		public override int RuleIndex { get { return RULE_dog; } }
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IstVisitor<TResult> typedVisitor = visitor as IstVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitDog(this);
+			else return visitor.VisitChildren(this);
+		}
+	}
+
+	[RuleVersion(0)]
+	public DogContext dog() {
+		DogContext _localctx = new DogContext(Context, State);
+		EnterRule(_localctx, 2, RULE_dog);
+		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 2;
-			Match(T__0);
+			State = 8;
+			Match(T__1);
 			}
 		}
 		catch (RecognitionException re) {
@@ -118,8 +172,9 @@ public partial class stParser : Parser {
 	}
 
 	private static int[] _serializedATN = {
-		4,1,4,5,2,0,7,0,1,0,1,0,1,0,0,0,1,0,0,0,3,0,2,1,0,0,0,2,3,5,1,0,0,3,1,
-		1,0,0,0,0
+		4,1,5,11,2,0,7,0,2,1,7,1,1,0,1,0,3,0,7,8,0,1,1,1,1,1,1,0,0,2,0,2,0,0,9,
+		0,6,1,0,0,0,2,8,1,0,0,0,4,7,5,1,0,0,5,7,3,2,1,0,6,4,1,0,0,0,6,5,1,0,0,
+		0,7,1,1,0,0,0,8,9,5,2,0,0,9,3,1,0,0,0,1,6
 	};
 
 	public static readonly ATN _ATN =

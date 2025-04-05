@@ -2,7 +2,8 @@ grammar st;
 // options
 options { caseInsensitive=true; }
 
-program : 'id';
+program : 'id' | dog;
+dog : 'dog';
 
 // Lexer //
 
