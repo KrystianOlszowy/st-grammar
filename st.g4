@@ -2,7 +2,7 @@ grammar st;
 // options
 
 // Parser //
-program: PROGRAM .*? END_PROGRAM ;
+program: PROGRAM .*? END_PROGRAM;
 
 // Lexer //
 
@@ -65,8 +65,106 @@ ANY_DATE: 'ANY_DATE';
 TYPE: 'TYPE';
 END_TYPE: 'END_TYPE';
 ARRAY: 'ARRAY';
-OF : 'OF';
+OF: 'OF';
 STRUCT: 'STRUCT';
+
+// variables addresing and sizing for direct representation
+VAR_LOCATION_PREFIX: 'I' | 'Q' | 'M';
+VAR_SIZE_PREFIX: 'X' | 'B' | 'W' | 'D' | 'L';
+
+// language constructions
+FUNCTION: 'FUNCTION';
+END_FUNCTION: 'END_FUNCTION';
+FUNCTION_BLOCK: 'FUNCTION_BLOCK';
+END_FUNCTION_BLOCK: 'END_FUNCTION_BLOCK';
+RETURN: 'RETURN';
+IF: 'IF';
+ELSIF: 'ELSIF';
+ELSE: 'ELSE';
+THEN: 'THEN';
+END_IF: 'END_IF';
+CASE: 'CASE';
+//OF: 'OF';
+END_CASE: 'END_CASE';
+FOR: 'FOR';
+//TO: 'TO';
+BY: 'BY';
+DO: 'DO';
+EXIT: 'EXIT';
+END_FOR: 'END_FOR';
+WHILE: 'WHILE';
+END_WHILE: 'END_WHILE';
+REPEAT: 'REPEAT';
+UNTIL: 'UNTIL';
+END_REPEAT: 'END_REPEAT';
+
+// configuration elements
+CONFIGURATION: 'CONFIGURATION';
+END_CONFIGURATION: 'END_CONFIGURATION';
+RESOURCE: 'RESOURCE';
+ON: 'ON';
+END_RESOURCE: 'END_RESOURCE';
+TASK: 'TASK';
+WITH: 'WITH';
+// can be unnecessery
+SINGLE: 'SINGLE';
+INTERVAL: 'INTERVAL';
+PRIORITY: 'PRIORITY';
+//end of unnecesssery stuff
+
+// SFC elements
+STEP: 'STEP';
+INITIAL_STEP: 'INITIAL_STEP';
+END_STEP: 'END_STEP';
+TRANSITION: 'TRANSITION';
+FROM: 'FROM';
+TO: 'TO';
+END_TRANSITION: 'END_TRANSITION';
+ACTION: 'ACTION';
+END_ACTION: 'END_ACTION';
+
+// special characters
+COLON: ':';
+SEMICOLON: ';';
+DOT: '.';
+COMMA: ',';
+BRACKET_OPEN: '(';
+BRACKET_CLOSE: ')';
+SQUARE_BRACKET_OPEN: '[';
+SQUARE_BRACKET_CLOSE: ']';
+CURLY_BRACKET_OPEN: '{';
+CURLY_BRACKET_CLOSE: '}';
+HASH: '#';
+CARET: '^';
+PERCENT: '%';
+
+// transfer operators
+ASSIGN_OPERATOR: ':=';
+ANONYMOUS_FN_OPERATOR: '=>';
+
+// arithmetic operators
+ADD_OPERATOR: '+';
+SUBTRACT_OPERATOR: '-';
+MULTIPLY_OPERATOR: '*';
+DIVISION_OPERATOR: '/';
+MODULO_OPERATOR: 'MOD';
+EXPONENT_OPERATOR: '**';
+
+// relational operators
+EQUAL_OPERATOR: '=';
+LESS_THAN_OPERATOR: '<';
+LESS_THAN_EQUAL_OPERATOR: '<=';
+GREATER_THAN_OPERATOR: '>';
+GREATER_THAN_EQUAL_OPERATOR: '>=';
+NOT_EQUAL_OPERATOR: '<>';
+
+// logical/bitwise operators
+AND_OPERATOR: '&' | 'AND';
+OR_OPERATOR: 'OR';
+XOR_OPERATOR: 'XOR';
+NEGATION_OPERATOR: 'NOT';
+
+// values
 
 
 // comments and whitespaces
