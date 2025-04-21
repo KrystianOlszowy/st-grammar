@@ -37,4 +37,82 @@ public interface IstVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitProgram([NotNull] stParser.ProgramContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.literalValue"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitLiteralValue([NotNull] stParser.LiteralValueContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.numericLiteral"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitNumericLiteral([NotNull] stParser.NumericLiteralContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.intLiteral"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitIntLiteral([NotNull] stParser.IntLiteralContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.intLiteralValue"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitIntLiteralValue([NotNull] stParser.IntLiteralValueContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.intTypeName"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitIntTypeName([NotNull] stParser.IntTypeNameContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.unsignedIntTypeName"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitUnsignedIntTypeName([NotNull] stParser.UnsignedIntTypeNameContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.signedIntTypeName"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSignedIntTypeName([NotNull] stParser.SignedIntTypeNameContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.realLiteral"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitRealLiteral([NotNull] stParser.RealLiteralContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.realTypeName"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitRealTypeName([NotNull] stParser.RealTypeNameContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.bitStringLiteral"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitBitStringLiteral([NotNull] stParser.BitStringLiteralContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.multibitsTypeName"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitMultibitsTypeName([NotNull] stParser.MultibitsTypeNameContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.boolLiteral"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitBoolLiteral([NotNull] stParser.BoolLiteralContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.boolTypeName"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitBoolTypeName([NotNull] stParser.BoolTypeNameContext context);
 }
