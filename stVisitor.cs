@@ -115,4 +115,76 @@ public interface IstVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitBoolTypeName([NotNull] stParser.BoolTypeNameContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.charLiteral"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitCharLiteral([NotNull] stParser.CharLiteralContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.charTypeName"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitCharTypeName([NotNull] stParser.CharTypeNameContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.charString"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitCharString([NotNull] stParser.CharStringContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.timeLiteral"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitTimeLiteral([NotNull] stParser.TimeLiteralContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.durationLiteral"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitDurationLiteral([NotNull] stParser.DurationLiteralContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.timeTypeName"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitTimeTypeName([NotNull] stParser.TimeTypeNameContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.timeOfDayLiteral"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitTimeOfDayLiteral([NotNull] stParser.TimeOfDayLiteralContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.timeOfDayTypeName"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitTimeOfDayTypeName([NotNull] stParser.TimeOfDayTypeNameContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.dateLiteral"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitDateLiteral([NotNull] stParser.DateLiteralContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.dateTypeName"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitDateTypeName([NotNull] stParser.DateTypeNameContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.dateAndTimeLiteral"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitDateAndTimeLiteral([NotNull] stParser.DateAndTimeLiteralContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.dateAndTimeTypeName"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitDateAndTimeTypeName([NotNull] stParser.DateAndTimeTypeNameContext context);
 }

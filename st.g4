@@ -10,8 +10,8 @@ END_PROGRAM: 'END_PROGRAM';
 // Literals
 literalValue:
 	numericLiteral
-	/*| charLiteral*/
-	/*| timeLiteral*/
+	| charLiteral
+	| timeLiteral
 	| bitStringLiteral
 	| boolLiteral;
 
@@ -29,12 +29,13 @@ intTypeName: unsignedIntTypeName | signedIntTypeName;
 unsignedIntTypeName: USINT | UINT | UDINT | ULINT;
 signedIntTypeName: SINT | INT | DINT | LINT;
 
+// real literals
 realLiteral: (realTypeName '#')? SIMPLE_REAL (
 		'E' (SIGNED_INT | UNSIGNED_INT)
 	)?;
-
 realTypeName: REAL | LREAL;
 
+// bit string literals
 bitStringLiteral: (multibitsTypeName '#')? (
 		UNSIGNED_INT
 		| BINARY_INT
@@ -43,27 +44,47 @@ bitStringLiteral: (multibitsTypeName '#')? (
 	);
 multibitsTypeName: BYTE | WORD | DWORD | LWORD;
 
+// bool literals
 boolLiteral: (boolTypeName '#')? (BOOLEAN | '0' | '1');
 boolTypeName: BOOL;
 
-/* 
- charLiteral : ( 'STRING#' )? charString; 
- charString : singleByteCharacterString |
- doubleByteCharacterString; 
- singleByteCharacterString : '\'' singleByteCharValue + '\''; 
- doubleByteCharacterString : '"' doubleByteCharValue + '"'; 
- singleByteCharValue : commonCharValue
- | '$\'' | '"' | '$' HEX_DIGIT HEX_DIGIT; 
- doubleByteCharValue : commonCharValue | '\'' | '$"' |
- '$' HEX_DIGIT HEX_DIGIT HEX_DIGIT HEX_DIGIT; 
- commonCharValue : ' ' | '!' | '#' | '%' | '&' |
- '('..'/' | '0'..'9' | ':'..'@' | 'A'..'Z' | '['..'`' | 'a'..'z' | '{'..'~' 
- | '$$' | '$L' | '$N'
- |
- '$P' | '$R' | '$T';
- */
+// character string literals
+charLiteral: ( charTypeName '#')? charString;
+charTypeName: STRING | CHAR | WSTRING | WCHAR;
+charString: SINGLE_BYTE_STRING | DOUBLE_BYTE_STRING;
 
-// Lexer //
+// time litearals
+timeLiteral:
+	durationLiteral
+	| timeOfDayLiteral
+	| dateLiteral
+	| dateAndTimeLiteral;
+
+durationLiteral: (timeTypeName | 'T' | 'LT') '#' ('+' | '-')? DURATION;
+timeTypeName: TIME | LTIME;
+
+timeOfDayLiteral: timeOfDayTypeName '#' CLOCK_TIME;
+timeOfDayTypeName: TIME_OF_DAY | LTIME_OF_DAY;
+
+dateLiteral: (dateTypeName | 'D' | 'LD') '#' DATE_VALUE;
+dateTypeName: DATE | LDATE;
+
+dateAndTimeLiteral:
+	(dateAndTimeTypeName | 'DT' | 'LDT') '#' DATE_TIME_VALUE;
+dateAndTimeTypeName: DATE_AND_TIME | LDATE_AND_TIME;
+
+///////////
+// Lexer // /////////
+
+// strings
+SINGLE_BYTE_STRING: '\'' SINGLE_BYTE_CHAR* '\'';
+DOUBLE_BYTE_STRING: '"' DOUBLE_BYTE_CHAR* '"';
+
+// date and time
+DURATION: (DURATION_SEGMENT)+;
+DATE_TIME_VALUE: DATE_VALUE '-' CLOCK_TIME;
+DATE_VALUE: DIGIT+ '-' DIGIT+ '-' DIGIT+;
+CLOCK_TIME: DIGIT+ ':' DIGIT+ ':' DIGIT+ ('.' DIGIT+)?;
 
 // simple data types //
 SIGNED_INT: ( '+' | '-') UNSIGNED_INT;
@@ -99,6 +120,22 @@ LWORD: 'LWORD';
 // bool type name
 BOOL: 'BOOL';
 
+// characters type names
+STRING: 'STRING';
+WSTRING: 'WSTRING';
+CHAR: 'CHAR';
+WCHAR: 'WCHAR';
+
+// data type names
+TIME: 'TIME';
+LTIME: 'LTIME';
+TIME_OF_DAY: 'TIME_OF_DAY';
+LTIME_OF_DAY: 'LTIME_OF_DAY';
+DATE: 'DATE';
+LDATE: 'LDATE';
+DATE_AND_TIME: 'DATE_AND_TIME';
+LDATE_AND_TIME: 'LDATE_AND_TIME';
+
 // special characters
 DOT: '.';
 
@@ -109,11 +146,54 @@ fragment BIT: [0-1];
 fragment OCTAL_DIGIT: [0-7];
 fragment HEX_DIGIT: [0-9a-fA-F];
 
+fragment SINGLE_BYTE_CHAR:
+	COMMON_CHAR
+	| '$\''
+	| '"'
+	| '$' HEX_DIGIT HEX_DIGIT;
+
+fragment DOUBLE_BYTE_CHAR:
+	COMMON_CHAR
+	| '\''
+	| '$"'
+	| '$' HEX_DIGIT HEX_DIGIT HEX_DIGIT HEX_DIGIT;
+
+fragment COMMON_CHAR:
+	[ !#%&]
+	| '(' ..'/'
+	| DIGIT
+	| NON_DIGIT
+	| [:-@]
+	| '[' ..'`'
+	| '{' ..'~'
+	| TWO_CHAR_COMMON;
+
+fragment TWO_CHAR_COMMON:
+	'$$'
+	| '$L'
+	| '$N'
+	| '$P'
+	| '$R'
+	| '$T';
+
+fragment DURATION_SEGMENT:
+	DIGIT+ ('.' DIGIT+)? DURATION_UNIT
+	| DIGIT+ DURATION_UNIT '_'?;
+
+fragment DURATION_UNIT:
+	'D'
+	| 'H'
+	| 'M'
+	| 'S'
+	| 'MS'
+	| 'US'
+	| 'NS';
+
 // identifiers
 IDENTIFIER:
 	NON_DIGIT (NON_DIGIT | DIGIT)*; //lack of underscore checking
 
-// pragma
+// pragmas
 PRAGMA: '{' .*? '}' -> channel(HIDDEN);
 
 // comments
