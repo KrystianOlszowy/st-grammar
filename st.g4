@@ -7,6 +7,203 @@ program: PROGRAM literalValue END_PROGRAM ';'?;
 PROGRAM: 'PROGRAM';
 END_PROGRAM: 'END_PROGRAM';
 
+// type accesses
+dataTypeAccess: elementaryTypeName | derivedTypeAccess;
+derivedTypeAccess:
+	singleElementTypeAccess
+	| arrayTypeAccess
+	| structTypeAccess
+	| stringTypeAccess
+	//| classTypeAccess 
+	| referenceTypeAccess
+/*| interfaceTypeAccess*/;
+
+stringTypeAccess: ( namespaceName '.')* stringTypeName;
+stringTypeName:
+	STRING ('[' UNSIGNED_INT ']')?
+	| WSTRING ( '[' UNSIGNED_INT ']')?
+	| CHAR
+	| WCHAR;
+
+singleElementTypeAccess:
+	simpleTypeAccess
+	| subrangeTypeAccess
+	| enumTypeAccess;
+simpleTypeAccess: ( namespaceName '.')* simpleTypeName;
+subrangeTypeAccess: ( namespaceName '.')* subrangeTypeName;
+enumTypeAccess: ( namespaceName '.')* enumTypeName;
+simpleTypeName: IDENTIFIER;
+subrangeTypeName: IDENTIFIER;
+enumTypeName: IDENTIFIER;
+
+arrayTypeAccess: ( namespaceName '.')* arrayTypeName;
+structTypeAccess: ( namespaceName '.')* structTypeName;
+
+arrayTypeName: IDENTIFIER;
+structTypeName: IDENTIFIER;
+namespaceName: IDENTIFIER;
+
+// data type declaration
+dataTypeDeclaration: TYPE ( typeDeclaration ';')+ END_TYPE;
+typeDeclaration:
+	simpleTypeDeclaration
+	| subrangeTypeDeclaration
+	| enumTypeDeclaration
+	| arrayTypeDeclaration
+	| structTypeDeclaration
+	| stringTypeDeclaration
+	| referenceTypeDeclaration;
+
+simpleTypeDeclaration: simpleTypeName ':' simpleSpecInit;
+simpleSpecInit:
+	simpleSpec (':=' literalValue /*Constant_Expr*/)?;
+simpleSpec: elementaryTypeName | simpleTypeAccess;
+elementaryTypeName:
+	numericTypeName
+	| multibitsTypeName
+	| stringTypeName
+	| dateTypeName
+	| timeTypeName;
+
+numericTypeName: intTypeName | realTypeName;
+
+// subranges
+subrangeTypeDeclaration: subrangeTypeName ':' subrangeSpecInit;
+subrangeSpecInit: subrangeSpec ( ':=' SIGNED_INT)?;
+subrangeSpec: intTypeName '(' subrange ')' | subrangeTypeAccess;
+subrange:
+	literalValue /*Constant_Expr*/ '..' literalValue /*Constant_Expr*/;
+
+// enums
+enumTypeDeclaration:
+	enumTypeName ':' (
+		( elementaryTypeName? namedSpecInit)
+		| enumSpecInit
+	);
+namedSpecInit:
+	'(' enumValueSpec (',' enumValueSpec)* ')' (':=' enumValue)?;
+enumSpecInit: (
+		( '(' IDENTIFIER ( ',' IDENTIFIER)* ')')
+		| enumTypeAccess
+	) (':=' enumValue)?;
+enumValueSpec:
+	IDENTIFIER (
+		':=' (intLiteral | literalValue /*Constant_Expr*/)
+	)?;
+enumValue: ( enumTypeName '#')? IDENTIFIER;
+
+// arrays
+arrayTypeDeclaration: arrayTypeName ':' arraySpecInit;
+arraySpecInit: arraySpec ( ':=' arrayInit)?;
+arraySpec:
+	arrayTypeAccess
+	| ARRAY '[' subrange (',' subrange)* ']' OF dataTypeAccess;
+arrayInit: '[' arrayElemInit ( ',' arrayElemInit)* ']';
+arrayElemInit:
+	arrayElemInitValue
+	| UNSIGNED_INT '(' arrayElemInitValue? ')';
+arrayElemInitValue:
+	literalValue /*Constant_Expr*/
+	| enumValue
+	| structInit
+	| arrayInit;
+
+// structs
+structTypeDeclaration: structTypeName ':' structSpec;
+structSpec: structDecl | structSpecInit;
+structSpecInit: structTypeAccess ( ':=' structInit)?;
+structDecl: STRUCT OVERLAP? (structElemDecl ';')+ END_STRUCT;
+structElemDecl:
+	structElemName (locatedAt multibitPartAccess?)? ':' (
+		simpleSpecInit
+		| subrangeSpecInit
+		| enumSpecInit
+		| arraySpecInit
+		| structSpecInit
+	);
+
+multibitPartAccess:
+	'.' (
+		UNSIGNED_INT
+		| '%' ( 'X' | 'B' | 'W' | 'D' | 'L')? UNSIGNED_INT
+	);
+
+structElemName: IDENTIFIER;
+structInit: '(' structElemInit ( ',' structElemInit)* ')';
+structElemInit:
+	structElemName ':=' (
+		literalValue /*Constant_Expr*/
+		| enumValue
+		| arrayInit
+		| structInit
+		| referenceValue
+	);
+
+// string declaration
+stringTypeDeclaration:
+	stringTypeName ':' stringTypeName (':=' charString)?;
+
+// direct variable decl
+locatedAt: AT directVariable;
+directVariable:
+	'%' ('I' | 'Q' | 'M') ('X' | 'B' | 'W' | 'D' | 'L')? UNSIGNED_INT (
+		'.' UNSIGNED_INT
+	)*;
+
+// reference values
+referenceTypeDeclaration:
+	referenceTypeName ':' referenceSpecInit;
+referenceSpecInit: refSpec ( ':=' referenceValue)?;
+refSpec: REF_TO+ dataTypeAccess;
+referenceTypeName: IDENTIFIER;
+referenceTypeAccess: ( namespaceName '.')* referenceTypeName;
+referenceName: IDENTIFIER;
+referenceValue: referenceAddress | NULL;
+referenceAddress:
+	REF '(' /*( symbolicVariable | fbInstanceName | classInstanceName )*/ ')';
+referenceAssign:
+	referenceName ':=' (
+		referenceName
+		| referenceDeref
+		| referenceValue
+	);
+referenceDeref: referenceName '^'+;
+
+variableName: IDENTIFIER;
+
+// Sequential Function Chart (SFC) 
+sfc: sfcNetwork+;
+sfcNetwork: initialStep ( step | transition | action)*;
+
+initialStep:
+	INITIAL_STEP stepName ':' (actionAssociation ';')* END_STEP;
+step: STEP stepName ':' ( actionAssociation ';')* END_STEP;
+stepName: IDENTIFIER;
+
+action: ACTION actionName ':' /*fbBody*/ END_ACTION;
+actionAssociation:
+	actionName '(' actionQualifier? (',' indicatorName)* ')';
+actionName: IDENTIFIER;
+actionQualifier:
+	'N'
+	| 'R'
+	| 'S'
+	| 'P'
+	| (( 'L' | 'D' | 'SD' | 'DS' | 'SL') ',' actionTime);
+actionTime: durationLiteral | variableName;
+indicatorName: variableName;
+
+transition:
+	TRANSITION transitionName? (
+		'(' PRIORITY ':=' UNSIGNED_INT ')'
+	)? FROM steps TO steps ':' transitionCondition END_TRANSITION;
+transitionName: IDENTIFIER;
+transitionCondition: ':=' /*expression*/ ';';
+
+steps: stepName | '(' stepName ( ',' stepName)+ ')';
+
+
+
 // Literals
 literalValue:
 	numericLiteral
@@ -73,8 +270,7 @@ dateAndTimeLiteral:
 	(dateAndTimeTypeName | 'DT' | 'LDT') '#' DATE_TIME_VALUE;
 dateAndTimeTypeName: DATE_AND_TIME | LDATE_AND_TIME;
 
-///////////
-// Lexer // /////////
+// Lexer //
 
 // strings
 SINGLE_BYTE_STRING: '\'' SINGLE_BYTE_CHAR* '\'';
@@ -135,6 +331,31 @@ DATE: 'DATE';
 LDATE: 'LDATE';
 DATE_AND_TIME: 'DATE_AND_TIME';
 LDATE_AND_TIME: 'LDATE_AND_TIME';
+
+// user defined data types
+TYPE: 'TYPE';
+END_TYPE: 'END_TYPE';
+ARRAY: 'ARRAY';
+OF: 'OF';
+STRUCT: 'STRUCT';
+OVERLAP: 'OVERLAP';
+END_STRUCT: 'END_STRUCT';
+AT: 'AT';
+REF_TO: 'REF_TO';
+REF: 'REF';
+NULL: 'NULL';
+
+// sequential function chart (SFC) 
+INITIAL_STEP: 'INITIAL_STEP';
+END_STEP: 'END_STEP';
+STEP: 'STEP';
+TRANSITION: 'TRANSITION';
+PRIORITY: 'PRIORITY';
+FROM: 'FROM';
+TO: 'TO';
+END_TRANSITION: 'END_TRANSITION';
+ACTION: 'ACTION';
+END_ACTION: 'END_ACTION';
 
 // special characters
 DOT: '.';
