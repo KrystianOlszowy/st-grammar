@@ -3,7 +3,7 @@ grammar st;
 // namespace: (program | function | fb | global_var | class)*;
 
 // Parser //
-program: PROGRAM literalValue END_PROGRAM ';'?;
+program: PROGRAM directVariable END_PROGRAM ';'?;
 
 PROGRAM: 'PROGRAM';
 END_PROGRAM: 'END_PROGRAM';
@@ -81,6 +81,13 @@ dateAndTimeTypeName:
 	| 'DT'
 	| 'LDT';
 
+// direct variables
+directVariable: PERCENT directVariableLocationPrefix directVariableSizePrefix? directVariableAddress?;
+directVariableLocationPrefix: LOCATION_PREFIX;
+directVariableSizePrefix: SIZE_PREFIX;
+directVariableAddress: DIRECT_ADDRESS;
+
+
 // Lexer //
 
 // strings
@@ -89,14 +96,18 @@ DOUBLE_BYTE_STRING: '"' DOUBLE_BYTE_CHAR* '"';
 
 // date and time
 DURATION: ('+' | '-')? (DIGIT+ DURATION_UNIT '_'?)+ DIGIT+ (
-		'.' DIGIT+
+		DOT DIGIT+
 	)? DURATION_UNIT;
 DATE_TIME_VALUE: DATE_VALUE '-' CLOCK_TIME;
-DATE_VALUE: DIGIT DIGIT DIGIT DIGIT '-' DIGIT DIGIT '-' DIGIT DIGIT;
+DATE_VALUE:
+	DIGIT DIGIT DIGIT DIGIT '-' DIGIT DIGIT '-' DIGIT DIGIT;
 CLOCK_TIME: DIGIT DIGIT ':' DIGIT DIGIT ':' SIMPLE_REAL;
 
 // simple data types //
-GENERAL_REAL: ( '+' | '-') SIMPLE_REAL ('E' (SIGNED_INT | UNSIGNED_INT))?;
+DIRECT_ADDRESS: UNSIGNED_INT (DOT UNSIGNED_INT)*;
+GENERAL_REAL: ('+' | '-') SIMPLE_REAL (
+		'E' (SIGNED_INT | UNSIGNED_INT)
+	)?;
 SIMPLE_REAL: UNSIGNED_INT DOT UNSIGNED_INT;
 SIGNED_INT: ( '+' | '-') UNSIGNED_INT;
 UNSIGNED_INT: DIGIT ( '_'? DIGIT)*;
@@ -104,8 +115,6 @@ BINARY_INT: '2#' ( '_'? BIT)+;
 OCTAL_INT: '8#' ( '_'? OCTAL_DIGIT)+;
 HEX_INT: '16#' ( '_'? HEX_DIGIT)+;
 BOOLEAN: FALSE | TRUE;
-
-// numeric data type names //
 
 // integer names
 USINT: 'USINT';
@@ -148,8 +157,13 @@ LDATE: 'LDATE';
 DATE_AND_TIME: 'DATE_AND_TIME';
 LDATE_AND_TIME: 'LDATE_AND_TIME';
 
+//direct variables
+LOCATION_PREFIX: 'I' | 'Q' | 'M';
+SIZE_PREFIX : 'X' | 'B' | 'W' | 'D' | 'L';
+
 // special characters
 DOT: '.';
+PERCENT: '%';
 
 // essential fragments
 fragment NON_DIGIT: [a-zA-Z_];
@@ -198,7 +212,7 @@ fragment DURATION_UNIT:
 	| 'NS';
 
 // identifiers
-IDENTIFIER: NON_DIGIT (NON_DIGIT | DIGIT)*;
+//IDENTIFIER: NON_DIGIT (NON_DIGIT | DIGIT)*;
 
 // pragmas //miejsce jest waażne, w konkretnych miejscach są 
 PRAGMA: '{' .*? '}' -> channel(HIDDEN);

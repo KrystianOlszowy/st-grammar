@@ -229,4 +229,28 @@ public interface IstVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitDateAndTimeTypeName([NotNull] stParser.DateAndTimeTypeNameContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.directVariable"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitDirectVariable([NotNull] stParser.DirectVariableContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.directVariableLocationPrefix"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitDirectVariableLocationPrefix([NotNull] stParser.DirectVariableLocationPrefixContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.directVariableSizePrefix"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitDirectVariableSizePrefix([NotNull] stParser.DirectVariableSizePrefixContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.directVariableAddress"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitDirectVariableAddress([NotNull] stParser.DirectVariableAddressContext context);
 }
