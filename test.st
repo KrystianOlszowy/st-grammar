@@ -59,12 +59,12 @@ prograM
 //LD#2010-09-22
 
 // DATE AND TIME ///////////////
-//DATE_AND_TIME#1984-06-25-15:36:55.360227400 
+DATE_AND_TIME#1984-06-25-15:36:55.360227400 
 //LDT#1984-06-25-15:36:55.360_227_400
 
 // DIRECT VARIABLES //////////////
 //%QX7.5 
-%MW0.7.9
+//%MW0.7.9
 
 /////////////////////////////////////////////////////////
 // Polecenia do testowania tworzenia drzew składniowych:

@@ -3,7 +3,8 @@ grammar st;
 // namespace: (program | function | fb | global_var | class)*;
 
 // Parser //
-program: PROGRAM directVariable END_PROGRAM ';'?;
+program:
+	PROGRAM (literalValue | directVariable) END_PROGRAM ';'?;
 
 PROGRAM: 'PROGRAM';
 END_PROGRAM: 'END_PROGRAM';
@@ -82,14 +83,13 @@ dateAndTimeTypeName:
 	| 'LDT';
 
 // direct variables
-directVariable: PERCENT directVariableLocationPrefix directVariableSizePrefix? directVariableAddress?;
-directVariableLocationPrefix: LOCATION_PREFIX;
-directVariableSizePrefix: SIZE_PREFIX;
-directVariableAddress: DIRECT_ADDRESS;
-
+directVariable: DIRECT_VARIABLE;
 
 // Lexer //
-
+DIRECT_VARIABLE:
+	PERCENT ('I' | 'Q' | 'M') ('X' | 'B' | 'W' | 'D' | 'L') UNSIGNED_INT (
+		DOT UNSIGNED_INT
+	)*;
 // strings
 SINGLE_BYTE_STRING: '\'' SINGLE_BYTE_CHAR* '\'';
 DOUBLE_BYTE_STRING: '"' DOUBLE_BYTE_CHAR* '"';
@@ -101,14 +101,13 @@ DURATION: ('+' | '-')? (DIGIT+ DURATION_UNIT '_'?)+ DIGIT+ (
 DATE_TIME_VALUE: DATE_VALUE '-' CLOCK_TIME;
 DATE_VALUE:
 	DIGIT DIGIT DIGIT DIGIT '-' DIGIT DIGIT '-' DIGIT DIGIT;
-CLOCK_TIME: DIGIT DIGIT ':' DIGIT DIGIT ':' SIMPLE_REAL;
+CLOCK_TIME:
+	DIGIT DIGIT ':' DIGIT DIGIT ':' UNSIGNED_INT DOT UNSIGNED_INT;
 
 // simple data types //
-DIRECT_ADDRESS: UNSIGNED_INT (DOT UNSIGNED_INT)*;
-GENERAL_REAL: ('+' | '-') SIMPLE_REAL (
+GENERAL_REAL: ('+' | '-')? UNSIGNED_INT DOT UNSIGNED_INT (
 		'E' (SIGNED_INT | UNSIGNED_INT)
 	)?;
-SIMPLE_REAL: UNSIGNED_INT DOT UNSIGNED_INT;
 SIGNED_INT: ( '+' | '-') UNSIGNED_INT;
 UNSIGNED_INT: DIGIT ( '_'? DIGIT)*;
 BINARY_INT: '2#' ( '_'? BIT)+;
@@ -156,10 +155,6 @@ DATE: 'DATE';
 LDATE: 'LDATE';
 DATE_AND_TIME: 'DATE_AND_TIME';
 LDATE_AND_TIME: 'LDATE_AND_TIME';
-
-//direct variables
-LOCATION_PREFIX: 'I' | 'Q' | 'M';
-SIZE_PREFIX : 'X' | 'B' | 'W' | 'D' | 'L';
 
 // special characters
 DOT: '.';
@@ -212,7 +207,7 @@ fragment DURATION_UNIT:
 	| 'NS';
 
 // identifiers
-//IDENTIFIER: NON_DIGIT (NON_DIGIT | DIGIT)*;
+IDENTIFIER: NON_DIGIT (NON_DIGIT | DIGIT)*;
 
 // pragmas //miejsce jest waażne, w konkretnych miejscach są 
 PRAGMA: '{' .*? '}' -> channel(HIDDEN);
