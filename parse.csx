@@ -12,7 +12,15 @@ using System.IO;
 
 public class CaseInsensitiveInputStream : AntlrInputStream
 {
-    public CaseInsensitiveInputStream(string input) : base(input.ToUpperInvariant()) { }
+    public CaseInsensitiveInputStream(string input) : base(input) { }
+
+    public override int LA(int i)
+    {
+        int c = base.LA(i);
+        if (c <= 0)
+            return c;
+        return Char.ToUpperInvariant((char)c);
+    }
 }
 
 var filePath = "test.st"; 

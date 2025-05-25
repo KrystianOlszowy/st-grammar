@@ -1,5 +1,6 @@
 grammar st;
-// options //
+
+// namespace: (program | function | fb | global_var | class)*;
 
 // Parser //
 program: PROGRAM literalValue END_PROGRAM ';'?;
@@ -7,214 +8,17 @@ program: PROGRAM literalValue END_PROGRAM ';'?;
 PROGRAM: 'PROGRAM';
 END_PROGRAM: 'END_PROGRAM';
 
-// type accesses
-dataTypeAccess: elementaryTypeName | derivedTypeAccess;
-derivedTypeAccess:
-	singleElementTypeAccess
-	| arrayTypeAccess
-	| structTypeAccess
-	| stringTypeAccess
-	//| classTypeAccess 
-	| referenceTypeAccess
-/*| interfaceTypeAccess*/;
-
-stringTypeAccess: ( namespaceName '.')* stringTypeName;
-stringTypeName:
-	STRING ('[' UNSIGNED_INT ']')?
-	| WSTRING ( '[' UNSIGNED_INT ']')?
-	| CHAR
-	| WCHAR;
-
-singleElementTypeAccess:
-	simpleTypeAccess
-	| subrangeTypeAccess
-	| enumTypeAccess;
-simpleTypeAccess: ( namespaceName '.')* simpleTypeName;
-subrangeTypeAccess: ( namespaceName '.')* subrangeTypeName;
-enumTypeAccess: ( namespaceName '.')* enumTypeName;
-simpleTypeName: IDENTIFIER;
-subrangeTypeName: IDENTIFIER;
-enumTypeName: IDENTIFIER;
-
-arrayTypeAccess: ( namespaceName '.')* arrayTypeName;
-structTypeAccess: ( namespaceName '.')* structTypeName;
-
-arrayTypeName: IDENTIFIER;
-structTypeName: IDENTIFIER;
-namespaceName: IDENTIFIER;
-
-// data type declaration
-dataTypeDeclaration: TYPE ( typeDeclaration ';')+ END_TYPE;
-typeDeclaration:
-	simpleTypeDeclaration
-	| subrangeTypeDeclaration
-	| enumTypeDeclaration
-	| arrayTypeDeclaration
-	| structTypeDeclaration
-	| stringTypeDeclaration
-	| referenceTypeDeclaration;
-
-simpleTypeDeclaration: simpleTypeName ':' simpleSpecInit;
-simpleSpecInit:
-	simpleSpec (':=' literalValue /*Constant_Expr*/)?;
-simpleSpec: elementaryTypeName | simpleTypeAccess;
-elementaryTypeName:
-	numericTypeName
-	| multibitsTypeName
-	| stringTypeName
-	| dateTypeName
-	| timeTypeName;
-
-numericTypeName: intTypeName | realTypeName;
-
-// subranges
-subrangeTypeDeclaration: subrangeTypeName ':' subrangeSpecInit;
-subrangeSpecInit: subrangeSpec ( ':=' SIGNED_INT)?;
-subrangeSpec: intTypeName '(' subrange ')' | subrangeTypeAccess;
-subrange:
-	literalValue /*Constant_Expr*/ '..' literalValue /*Constant_Expr*/;
-
-// enums
-enumTypeDeclaration:
-	enumTypeName ':' (
-		( elementaryTypeName? namedSpecInit)
-		| enumSpecInit
-	);
-namedSpecInit:
-	'(' enumValueSpec (',' enumValueSpec)* ')' (':=' enumValue)?;
-enumSpecInit: (
-		( '(' IDENTIFIER ( ',' IDENTIFIER)* ')')
-		| enumTypeAccess
-	) (':=' enumValue)?;
-enumValueSpec:
-	IDENTIFIER (
-		':=' (intLiteral | literalValue /*Constant_Expr*/)
-	)?;
-enumValue: ( enumTypeName '#')? IDENTIFIER;
-
-// arrays
-arrayTypeDeclaration: arrayTypeName ':' arraySpecInit;
-arraySpecInit: arraySpec ( ':=' arrayInit)?;
-arraySpec:
-	arrayTypeAccess
-	| ARRAY '[' subrange (',' subrange)* ']' OF dataTypeAccess;
-arrayInit: '[' arrayElemInit ( ',' arrayElemInit)* ']';
-arrayElemInit:
-	arrayElemInitValue
-	| UNSIGNED_INT '(' arrayElemInitValue? ')';
-arrayElemInitValue:
-	literalValue /*Constant_Expr*/
-	| enumValue
-	| structInit
-	| arrayInit;
-
-// structs
-structTypeDeclaration: structTypeName ':' structSpec;
-structSpec: structDecl | structSpecInit;
-structSpecInit: structTypeAccess ( ':=' structInit)?;
-structDecl: STRUCT OVERLAP? (structElemDecl ';')+ END_STRUCT;
-structElemDecl:
-	structElemName (locatedAt multibitPartAccess?)? ':' (
-		simpleSpecInit
-		| subrangeSpecInit
-		| enumSpecInit
-		| arraySpecInit
-		| structSpecInit
-	);
-
-multibitPartAccess:
-	'.' (
-		UNSIGNED_INT
-		| '%' ( 'X' | 'B' | 'W' | 'D' | 'L')? UNSIGNED_INT
-	);
-
-structElemName: IDENTIFIER;
-structInit: '(' structElemInit ( ',' structElemInit)* ')';
-structElemInit:
-	structElemName ':=' (
-		literalValue /*Constant_Expr*/
-		| enumValue
-		| arrayInit
-		| structInit
-		| referenceValue
-	);
-
-// string declaration
-stringTypeDeclaration:
-	stringTypeName ':' stringTypeName (':=' charString)?;
-
-// direct variable decl
-locatedAt: AT directVariable;
-directVariable:
-	'%' ('I' | 'Q' | 'M') ('X' | 'B' | 'W' | 'D' | 'L')? UNSIGNED_INT (
-		'.' UNSIGNED_INT
-	)*;
-
-// reference values
-referenceTypeDeclaration:
-	referenceTypeName ':' referenceSpecInit;
-referenceSpecInit: refSpec ( ':=' referenceValue)?;
-refSpec: REF_TO+ dataTypeAccess;
-referenceTypeName: IDENTIFIER;
-referenceTypeAccess: ( namespaceName '.')* referenceTypeName;
-referenceName: IDENTIFIER;
-referenceValue: referenceAddress | NULL;
-referenceAddress:
-	REF '(' /*( symbolicVariable | fbInstanceName | classInstanceName )*/ ')';
-referenceAssign:
-	referenceName ':=' (
-		referenceName
-		| referenceDeref
-		| referenceValue
-	);
-referenceDeref: referenceName '^'+;
-
-variableName: IDENTIFIER;
-
-// Sequential Function Chart (SFC) 
-sfc: sfcNetwork+;
-sfcNetwork: initialStep ( step | transition | action)*;
-
-initialStep:
-	INITIAL_STEP stepName ':' (actionAssociation ';')* END_STEP;
-step: STEP stepName ':' ( actionAssociation ';')* END_STEP;
-stepName: IDENTIFIER;
-
-action: ACTION actionName ':' /*fbBody*/ END_ACTION;
-actionAssociation:
-	actionName '(' actionQualifier? (',' indicatorName)* ')';
-actionName: IDENTIFIER;
-actionQualifier:
-	'N'
-	| 'R'
-	| 'S'
-	| 'P'
-	| (( 'L' | 'D' | 'SD' | 'DS' | 'SL') ',' actionTime);
-actionTime: durationLiteral | variableName;
-indicatorName: variableName;
-
-transition:
-	TRANSITION transitionName? (
-		'(' PRIORITY ':=' UNSIGNED_INT ')'
-	)? FROM steps TO steps ':' transitionCondition END_TRANSITION;
-transitionName: IDENTIFIER;
-transitionCondition: ':=' /*expression*/ ';';
-
-steps: stepName | '(' stepName ( ',' stepName)+ ')';
-
-
-
 // Literals
 literalValue:
 	numericLiteral
+	| boolLiteral
 	| charLiteral
 	| timeLiteral
-	| bitStringLiteral
-	| boolLiteral;
+	| multibitsLiteral;
 
 numericLiteral: intLiteral | realLiteral;
 
-//integer literals
+// integer literals
 intLiteral: (intTypeName '#')? intLiteralValue;
 intLiteralValue:
 	SIGNED_INT
@@ -226,49 +30,56 @@ intTypeName: unsignedIntTypeName | signedIntTypeName;
 unsignedIntTypeName: USINT | UINT | UDINT | ULINT;
 signedIntTypeName: SINT | INT | DINT | LINT;
 
-// real literals
-realLiteral: (realTypeName '#')? SIMPLE_REAL (
-		'E' (SIGNED_INT | UNSIGNED_INT)
-	)?;
-realTypeName: REAL | LREAL;
-
-// bit string literals
-bitStringLiteral: (multibitsTypeName '#')? (
-		UNSIGNED_INT
-		| BINARY_INT
-		| OCTAL_INT
-		| HEX_INT
-	);
+// multibits literals
+multibitsLiteral: (multibitsTypeName '#')? multibitsLiteralValue;
+multibitsLiteralValue:
+	UNSIGNED_INT
+	| BINARY_INT
+	| OCTAL_INT
+	| HEX_INT;
 multibitsTypeName: BYTE | WORD | DWORD | LWORD;
 
+// real literals
+realLiteral: (realTypeName '#')? realLiteralValue;
+realLiteralValue: GENERAL_REAL;
+realTypeName: REAL | LREAL;
+
 // bool literals
-boolLiteral: (boolTypeName '#')? (BOOLEAN | '0' | '1');
+boolLiteral: (boolTypeName '#')? boolLiteralValue;
+boolLiteralValue: BOOLEAN | '0' | '1';
 boolTypeName: BOOL;
 
-// character string literals
+// character literals
 charLiteral: ( charTypeName '#')? charString;
-charTypeName: STRING | CHAR | WSTRING | WCHAR;
 charString: SINGLE_BYTE_STRING | DOUBLE_BYTE_STRING;
+charTypeName: STRING | CHAR | WSTRING | WCHAR;
 
-// time litearals
+// time literals
 timeLiteral:
 	durationLiteral
 	| timeOfDayLiteral
 	| dateLiteral
 	| dateAndTimeLiteral;
 
-durationLiteral: (timeTypeName | 'T' | 'LT') '#' ('+' | '-')? DURATION;
-timeTypeName: TIME | LTIME;
+durationLiteral: (durationTypeName) '#' durationLiteralValue;
+durationLiteralValue: DURATION;
+durationTypeName: TIME | LTIME | 'T' | 'LT';
 
-timeOfDayLiteral: timeOfDayTypeName '#' CLOCK_TIME;
-timeOfDayTypeName: TIME_OF_DAY | LTIME_OF_DAY;
+timeOfDayLiteral: timeOfDayTypeName '#' timeOfDayLiteralValue;
+timeOfDayLiteralValue: CLOCK_TIME;
+timeOfDayTypeName: TIME_OF_DAY | LTIME_OF_DAY | 'TOD' | 'LTOD';
 
-dateLiteral: (dateTypeName | 'D' | 'LD') '#' DATE_VALUE;
-dateTypeName: DATE | LDATE;
+dateLiteral: (dateTypeName) '#' dateLiteralValue;
+dateLiteralValue: DATE_VALUE;
+dateTypeName: DATE | LDATE | 'D' | 'LD';
 
-dateAndTimeLiteral:
-	(dateAndTimeTypeName | 'DT' | 'LDT') '#' DATE_TIME_VALUE;
-dateAndTimeTypeName: DATE_AND_TIME | LDATE_AND_TIME;
+dateAndTimeLiteral: (dateAndTimeTypeName) '#' dateAndTimeLiteralValue;
+dateAndTimeLiteralValue: DATE_TIME_VALUE;
+dateAndTimeTypeName:
+	DATE_AND_TIME
+	| LDATE_AND_TIME
+	| 'DT'
+	| 'LDT';
 
 // Lexer //
 
@@ -277,19 +88,22 @@ SINGLE_BYTE_STRING: '\'' SINGLE_BYTE_CHAR* '\'';
 DOUBLE_BYTE_STRING: '"' DOUBLE_BYTE_CHAR* '"';
 
 // date and time
-DURATION: (DURATION_SEGMENT)+;
+DURATION: ('+' | '-')? (DIGIT+ DURATION_UNIT '_'?)+ DIGIT+ (
+		'.' DIGIT+
+	)? DURATION_UNIT;
 DATE_TIME_VALUE: DATE_VALUE '-' CLOCK_TIME;
-DATE_VALUE: DIGIT+ '-' DIGIT+ '-' DIGIT+;
-CLOCK_TIME: DIGIT+ ':' DIGIT+ ':' DIGIT+ ('.' DIGIT+)?;
+DATE_VALUE: DIGIT DIGIT DIGIT DIGIT '-' DIGIT DIGIT '-' DIGIT DIGIT;
+CLOCK_TIME: DIGIT DIGIT ':' DIGIT DIGIT ':' SIMPLE_REAL;
 
 // simple data types //
+GENERAL_REAL: ( '+' | '-') SIMPLE_REAL ('E' (SIGNED_INT | UNSIGNED_INT))?;
+SIMPLE_REAL: UNSIGNED_INT DOT UNSIGNED_INT;
 SIGNED_INT: ( '+' | '-') UNSIGNED_INT;
 UNSIGNED_INT: DIGIT ( '_'? DIGIT)*;
 BINARY_INT: '2#' ( '_'? BIT)+;
 OCTAL_INT: '8#' ( '_'? OCTAL_DIGIT)+;
 HEX_INT: '16#' ( '_'? HEX_DIGIT)+;
-SIMPLE_REAL: (SIGNED_INT | UNSIGNED_INT) DOT UNSIGNED_INT;
-BOOLEAN: 'FALSE' | 'TRUE';
+BOOLEAN: FALSE | TRUE;
 
 // numeric data type names //
 
@@ -315,6 +129,8 @@ LWORD: 'LWORD';
 
 // bool type name
 BOOL: 'BOOL';
+FALSE: 'FALSE';
+TRUE: 'TRUE';
 
 // characters type names
 STRING: 'STRING';
@@ -331,31 +147,6 @@ DATE: 'DATE';
 LDATE: 'LDATE';
 DATE_AND_TIME: 'DATE_AND_TIME';
 LDATE_AND_TIME: 'LDATE_AND_TIME';
-
-// user defined data types
-TYPE: 'TYPE';
-END_TYPE: 'END_TYPE';
-ARRAY: 'ARRAY';
-OF: 'OF';
-STRUCT: 'STRUCT';
-OVERLAP: 'OVERLAP';
-END_STRUCT: 'END_STRUCT';
-AT: 'AT';
-REF_TO: 'REF_TO';
-REF: 'REF';
-NULL: 'NULL';
-
-// sequential function chart (SFC) 
-INITIAL_STEP: 'INITIAL_STEP';
-END_STEP: 'END_STEP';
-STEP: 'STEP';
-TRANSITION: 'TRANSITION';
-PRIORITY: 'PRIORITY';
-FROM: 'FROM';
-TO: 'TO';
-END_TRANSITION: 'END_TRANSITION';
-ACTION: 'ACTION';
-END_ACTION: 'END_ACTION';
 
 // special characters
 DOT: '.';
@@ -397,10 +188,6 @@ fragment TWO_CHAR_COMMON:
 	| '$R'
 	| '$T';
 
-fragment DURATION_SEGMENT:
-	DIGIT+ ('.' DIGIT+)? DURATION_UNIT
-	| DIGIT+ DURATION_UNIT '_'?;
-
 fragment DURATION_UNIT:
 	'D'
 	| 'H'
@@ -411,18 +198,17 @@ fragment DURATION_UNIT:
 	| 'NS';
 
 // identifiers
-IDENTIFIER:
-	NON_DIGIT (NON_DIGIT | DIGIT)*; //lack of underscore checking
+IDENTIFIER: NON_DIGIT (NON_DIGIT | DIGIT)*;
 
-// pragmas
+// pragmas //miejsce jest waażne, w konkretnych miejscach są 
 PRAGMA: '{' .*? '}' -> channel(HIDDEN);
 
 // comments
 LINE_COMMENT: '//' ~[\r\n]* -> channel(HIDDEN);
 SLASH_COMMENT:
-	'/*' (SLASH_COMMENT | .)*? '*/' -> channel(HIDDEN); //recursive lexer rule
+	'/*' (SLASH_COMMENT | .)*? '*/' -> channel(HIDDEN);
 BRACE_COMMENT:
-	'(*' (BRACE_COMMENT | .)*? '*)' -> channel(HIDDEN); //recursive lexer rule
+	'(*' (BRACE_COMMENT | .)*? '*)' -> channel(HIDDEN);
 
 // whitespaces
 WHITESPACE: [ \t\r\n]+ -> channel(HIDDEN);
