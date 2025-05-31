@@ -3,7 +3,7 @@
 prograM
 
 ////////////////////////////////
-/* Numeric and logic literals */
+/* /* Numeric and logic literals */ */
 ////////////////////////////////
 
 // INT ////////////////////////
@@ -59,12 +59,105 @@ prograM
 //LD#2010-09-22
 
 // DATE AND TIME ///////////////
-DATE_AND_TIME#1984-06-25-15:36:55.360227400 
+//DATE_AND_TIME#1984-06-25-15:36:55.360227400 
 //LDT#1984-06-25-15:36:55.360_227_400
 
-// DIRECT VARIABLES //////////////
+// DIRECT VARIABLES /////////////////////////////////////////
 //%QX7.5 
 //%MW0.7.9
+//%M*
+
+// USER DEFINED DATA TYPE 
+
+// ENUMARATION /////////////////////////////////////////////
+/*TYPE 
+  ANALOG_SIGNAL_RANGE: 
+ (BIPOLAR_10V, 
+  UNIPOLAR_10V, 
+  UNIPOLAR_1_5V, 
+  UNIPOLAR_0_5V, 
+  UNIPOLAR_4_20_MA, 
+  UNIPOLAR_0_20_MA) 
+  := UNIPOLAR_1_5V; 
+END_TYPE 
+*/
+
+// Data type with named values ////////////////////////////////
+// DOESNT WORK NOW !!!!
+/*TYPE 
+ Colors: DWORD 
+     (Red  := 16#00FF0000, 
+      Green:= 16#0000FF00, 
+      Blue := 16#000000FF, 
+      White:= Red OR Green OR Blue, 
+      Black:= Red AND Green AND Blue) 
+      := Green; 
+END_TYPE */
+
+// SUBRANGE DATA TYPE ///////////////////////////////////////
+/*TYPE 
+  ANALOG_DATA: INT(-4095 .. 4095):= 0; 
+END_TYPE
+*/
+
+// ARRAY DATA TYPE ////////////////////////////////////////////
+/*TYPE ANALOG_16_INPUT_DATA: 
+  ARRAY [1..16] OF ANALOG_DATA 
+ := [8(-4095), 8(4095)]; 
+END_TYPE*/ 
+
+// SIMPLE STRUCT //////////////////////////////////////////////////
+/*TYPE ANALOG_CHANNEL_CONFIGURATION: 
+  STRUCT 
+    RANGE:     ANALOG_SIGNAL_RANGE; 
+    MIN_SCALE: ANALOG_DATA:= -4095; 
+    MAX_SCALE: ANALOG_DATA:=  4095; 
+  END_STRUCT;
+END_TYPE*/
+
+// STRUCT WITH RELATIVE ADDRESSING ///////////////////////
+/*TYPE 
+  Com1_data: STRUCT  
+   head  AT %B0:  INT; 
+   length  AT %B2:  USINT:= 26;  
+   flag1  AT %X3.0:  BOOL; 
+   end  AT %B25:  BYTE; 
+  END_STRUCT; 
+END_TYPE*/
+
+// STRUCT WITH PARTLY SPECIFIED ADDRESSES //////////////
+/*TYPE 
+  HW_COMP: STRUCT 
+   IN AT %I*: BOOL; 
+   OUT_VAR AT %Q*: WORD:= 200; 
+   ITNL_VAR : REAL:= 123.0; // not located 
+   END_STRUCT; 
+END_TYPE 
+*/
+
+// DIRECTLY RERIVED DATA TYPE ///////////////////////////
+/*TYPE 
+  CNT:  UINT; 
+  FREQ: REAL:= 50.0; 
+  ANALOG_CHANNEL_CONFIG: 
+   ANALOG_CHANNEL_CONFIGURATION 
+  := (MIN_SCALE:= 0, MAX_SCALE:= 4000); 
+END_TYPE */
+
+// DATA TYPE INITIALIZATION WITH CONST EXPRESSION ///////////////
+/*TYPE 
+  PIx2: REAL:= 2 * 3.1416; 
+END_TYPE
+*/
+
+// REFERENCE DATA TYPES 
+TYPE 
+ myArrType1:  ARRAY[0..999] OF INT; 
+ myArrType2:  myArrType1; 
+ myRefType1:  REF_TO myArrType1; 
+ myRefType2:  REF_TO myArrType2; 
+END_TYPE
+
 
 /////////////////////////////////////////////////////////
 // Polecenia do testowania tworzenia drzew składniowych:

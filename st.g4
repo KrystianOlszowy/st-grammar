@@ -4,18 +4,175 @@ grammar st;
 
 // Parser //
 program:
-	PROGRAM (literalValue | directVariable) END_PROGRAM ';'?;
+	PROGRAM (literalValue | dataTypeDeclaration | directVariable) END_PROGRAM ';'?;
 
 PROGRAM: 'PROGRAM';
 END_PROGRAM: 'END_PROGRAM';
 
+namespaceName: IDENTIFIER;
+
+// User defined data type declaraction
+dataTypeDeclaration: TYPE ( typeDeclaration ';')+ END_TYPE;
+typeDeclaration:
+	simpleTypeDeclaration
+	| subrangeTypeDeclaration
+	| enumTypeDeclaration
+	| arrayTypeDeclaration
+	| structTypeDeclaration
+	| stringTypeDeclaration
+	| refTypeDeclaration;
+
+// simple type declaration
+simpleTypeDeclaration: simpleTypeName ':' simpleSpecInit;
+simpleSpecInit: simpleSpec ( ':=' constExpression)?;
+simpleSpec: elementTypeName | simpleTypeAccess;
+elementTypeName:
+	numericTypeName
+	| boolTypeName
+	| derivedTypeAccess
+	| multibitsTypeName
+	| stringTypeName
+	| dateTypeName
+	| durationTypeName;
+numericTypeName: intTypeName | realTypeName;
+
+// subrange type declaration
+subrangeTypeDeclaration: subrangeTypeName ':' subrangeSpecInit;
+subrangeSpecInit: subrangeSpec ( ':=' (SIGNED_INT | UNSIGNED_INT))?;
+subrangeSpec: intTypeName '(' subrange ')' | subrangeTypeAccess;
+subrange: constExpression '..' constExpression;
+
+// enumeration type declaration
+enumTypeDeclaration:
+	enumTypeName ':' (
+		( elementTypeName? namedSpecInit)
+		| enumSpecInit
+	);
+namedSpecInit:
+	'(' enumValueSpec (',' enumValueSpec)* ')' (':=' enumValue)?;
+enumSpecInit: (
+		( '(' IDENTIFIER ( ',' IDENTIFIER)* ')')
+		| enumTypeAccess
+	) (':=' enumValue)?;
+enumValueSpec:
+	IDENTIFIER (':=' ( intLiteral | constExpression))?;
+enumValue: ( enumTypeName '#')? IDENTIFIER;
+
+// array type declaration
+arrayTypeDeclaration: arrayTypeName ':' arraySpecInit;
+arraySpecInit: arraySpec ( ':=' arrayInit)?;
+arraySpec:
+	arrayTypeAccess
+	| ARRAY '[' subrange (',' subrange)* ']' OF dataTypeAccess;
+dataTypeAccess: elementTypeName | derivedTypeAccess;
+arrayInit: '[' arrayElementInit ( ',' arrayElementInit)* ']';
+arrayElementInit:
+	arrayElementInitValue
+	| UNSIGNED_INT '(' arrayElementInitValue? ')';
+arrayElementInitValue:
+	constExpression
+	| enumValue
+	| structInit
+	| arrayInit;
+
+// struct type declaration
+structTypeDeclaration: structTypeName ':' structSpec;
+structSpec: structDeclaration | structSpecInit;
+structSpecInit: structTypeAccess ( ':=' structInit)?;
+structDeclaration:
+	STRUCT OVERLAP? (structElementDeclaration ';')+ END_STRUCT;
+structElementDeclaration:
+	structElementName (locatedAt multibitPartAccess?)? ':' (
+		simpleSpecInit
+		| subrangeSpecInit
+		| enumSpecInit
+		| arraySpecInit
+		| structSpecInit
+	);
+locatedAt: AT directVariable;
+multibitPartAccess:
+	'.' (
+		UNSIGNED_INT
+		| '%' ( 'X' | 'B' | 'W' | 'D' | 'L')? UNSIGNED_INT
+	);
+structElementName: IDENTIFIER;
+structInit: '(' structElementInit ( ',' structElementInit)* ')';
+structElementInit:
+	structElementName ':=' (
+		constExpression
+		| enumValue
+		| arrayInit
+		| structInit
+		| refValue
+	);
+
+// string type declaration
+stringTypeDeclaration:
+	stringTypeName ':' stringTypeName (':=' charString)?;
+
+// reference type declaration
+refTypeDeclaration: refTypeName ':' refSpecInit;
+refSpecInit: refSpec ( ':=' refValue)?;
+refSpec: REF_TO+ dataTypeAccess;
+refTypeName: IDENTIFIER;
+refTypeAccess: ( namespaceName '.')* refTypeName;
+ref_Name: IDENTIFIER;
+refValue: refAddress | NULL;
+refAddress:
+	REF '(' (
+/*Symbolic_Variable*/
+		| /*FB_Instance_Name*/
+		| /*Class_Instance_Name*/
+	) ')';
+refAssign: ref_Name ':=' ( ref_Name | refDereference | refValue);
+refDereference: ref_Name '^'+;
+
+
+// Type accessing
+derivedTypeAccess:
+	singleElementTypeAccess
+	| arrayTypeAccess
+	| structTypeAccess
+	| stringTypeAccess
+/*| classTypeAccess */
+	| refTypeAccess
+/*| interfaceTypeAccess */;
+
+stringTypeAccess: ( namespaceName '.')* stringTypeName;
+stringTypeName: (STRING | WSTRING) ('[' UNSIGNED_INT ']')?
+	| CHAR
+	| WCHAR;
+
+singleElementTypeAccess:
+	simpleTypeAccess
+	| subrangeTypeAccess
+	| enumTypeAccess;
+
+simpleTypeAccess: ( namespaceName '.')* simpleTypeName;
+simpleTypeName: IDENTIFIER;
+
+subrangeTypeAccess: ( namespaceName '.')* subrangeTypeName;
+subrangeTypeName: IDENTIFIER;
+
+enumTypeAccess: ( namespaceName '.')* enumTypeName;
+enumTypeName: IDENTIFIER;
+
+arrayTypeAccess: ( namespaceName '.')* arrayTypeName;
+arrayTypeName: IDENTIFIER;
+
+structTypeAccess: ( namespaceName '.')* structTypeName;
+structTypeName: IDENTIFIER;
+
+constExpression: expression;
+expression: literalValue;
+
 // Literals
 literalValue:
 	numericLiteral
-	| boolLiteral
 	| charLiteral
 	| timeLiteral
-	| multibitsLiteral;
+	| multibitsLiteral
+	| boolLiteral;
 
 numericLiteral: intLiteral | realLiteral;
 
@@ -47,7 +204,7 @@ realTypeName: REAL | LREAL;
 
 // bool literals
 boolLiteral: (boolTypeName '#')? boolLiteralValue;
-boolLiteralValue: BOOLEAN | '0' | '1';
+boolLiteralValue: BOOLEAN | UNSIGNED_INT;
 boolTypeName: BOOL;
 
 // character literals
@@ -85,11 +242,11 @@ dateAndTimeTypeName:
 // direct variables
 directVariable: DIRECT_VARIABLE;
 
-// Lexer //
+// LEXER /////////////////////////////////////////////////////////////////////////////////////////////
+// tu może być problem przy mnożeniu
 DIRECT_VARIABLE:
-	PERCENT ('I' | 'Q' | 'M') ('X' | 'B' | 'W' | 'D' | 'L') UNSIGNED_INT (
-		DOT UNSIGNED_INT
-	)*;
+	PERCENT ('I' | 'Q' | 'M')? ('X' | 'B' | 'W' | 'D' | 'L' | '*')? (UNSIGNED_INT (
+		DOT UNSIGNED_INT)*)?;
 // strings
 SINGLE_BYTE_STRING: '\'' SINGLE_BYTE_CHAR* '\'';
 DOUBLE_BYTE_STRING: '"' DOUBLE_BYTE_CHAR* '"';
@@ -156,6 +313,27 @@ LDATE: 'LDATE';
 DATE_AND_TIME: 'DATE_AND_TIME';
 LDATE_AND_TIME: 'LDATE_AND_TIME';
 
+// user defined data types
+TYPE: 'TYPE';
+END_TYPE: 'END_TYPE';
+
+// arrays
+ARRAY: 'ARRAY';
+OF: 'OF';
+
+// structures
+STRUCT: 'STRUCT';
+OVERLAP: 'OVERLAP';
+END_STRUCT: 'END_STRUCT';
+
+//dirext variables
+AT: 'AT';
+
+// references
+REF_TO: 'REF_TO';
+REF: 'REF';
+NULL: 'NULL';
+
 // special characters
 DOT: '.';
 PERCENT: '%';
@@ -209,7 +387,9 @@ fragment DURATION_UNIT:
 // identifiers
 IDENTIFIER: NON_DIGIT (NON_DIGIT | DIGIT)*;
 
-// pragmas //miejsce jest waażne, w konkretnych miejscach są 
+//miejsce jest waażne, w konkretnych miejscach są 
+
+// pragmas 
 PRAGMA: '{' .*? '}' -> channel(HIDDEN);
 
 // comments
