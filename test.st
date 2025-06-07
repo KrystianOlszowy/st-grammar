@@ -150,7 +150,7 @@ END_TYPE */
 END_TYPE
 */
 
-// REFERENCE DATA TYPES 
+// REFERENCE DATA TYPES //////////////////////////////////////
 TYPE 
  myArrType1:  ARRAY[0..999] OF INT; 
  myArrType2:  myArrType1; 

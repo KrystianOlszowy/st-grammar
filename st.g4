@@ -2,16 +2,121 @@ grammar st;
 
 // namespace: (program | function | fb | global_var | class)*;
 
-// Parser //
+// Parser ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 program:
 	PROGRAM (literalValue | dataTypeDeclaration | directVariable) END_PROGRAM ';'?;
 
-PROGRAM: 'PROGRAM';
-END_PROGRAM: 'END_PROGRAM';
+// configuration and resource decaration//////////////////////////////////////////////////////////////////
+configName: IDENTIFIER;
+resourceTypeName: IDENTIFIER;
+configDeclaration:
+	CONFIGURATION configName globalVarDeclarations? (
+		singleResourceDeclaration
+		| resourceDeclaration+
+	) accessDeclarations? configInit? END_CONFIGURATION;
+resourceDeclaration:
+	RESOURCE resourceName ON resourceTypeName globalVarDeclarations? singleResourceDeclaration
+		END_RESOURCE;
+singleResourceDeclaration: (taskConfig ';')* (programConfig ';')+;
+resourceName: IDENTIFIER;
+accessDeclarations: VAR_ACCESS ( accessDeclaration ';')* END_VAR;
+accessDeclaration:
+	accessName ':' accessPath ':' dataTypeAccess accessDirection?;
+accessPath: (resourceName '.')? directVariable
+	| (resourceName '.')? (programName '.')? (
+		( fbInstanceName | classInstanceName) '.'
+	)* symbolicVariable;
+globalVarAccess: (resourceName '.')? globalVarName (
+		'.' structElementName
+	)?;
+accessName: IDENTIFIER;
+programOutputAccess: programName '.' symbolicVariable;
+programName: IDENTIFIER;
+accessDirection: READ_WRITE | READ_ONLY;
+taskConfig: TASK taskName taskInit;
+taskName: IDENTIFIER;
+taskInit:
+	'(' (SINGLE ':=' dataSource ',')? (
+		INTERVAL ':=' dataSource ','
+	)? PRIORITY ':=' UNSIGNED_INT ')';
+dataSource:
+	literalValue
+	| globalVarAccess
+	| programOutputAccess
+	| directVariable;
+programConfig:
+	PROGRAM (RETAIN | NON_RETAIN)? programName (WITH taskName)? ':' programTypeAccess (
+		'(' programConfigurationElements ')'
+	)?;
+programConfigurationElements:
+	programConfigurationElement (',' programConfigurationElement)*;
+programConfigurationElement: fbTask | programCnxn;
+fbTask: fbInstanceName WITH taskName;
+programCnxn:
+	symbolicVariable ':=' programDataSource
+	| symbolicVariable '=>' dataSink;
+programDataSource:
+	literalValue
+	| enumValue
+	| globalVarAccess
+	| directVariable;
+dataSink: globalVarAccess | directVariable;
+configInit: VAR_CONFIG ( configInstInit ';')* END_VAR;
+configInstInit:
+	resourceName '.' programName '.' (
+		( fbInstanceName | classInstanceName) '.'
+	)* (
+		variableName locatedAt? ':' locVarSpecInit
+		| (
+			( fbInstanceName ':' fbTypeAccess)
+			| ( classInstanceName ':' classTypeAccess)
+		) ':=' structInit
+	);
 
+namespaceDeclaration:
+	NAMESPACE INTERNAL? namespaceHName usingDirective* namespaceElements END_NAMESPACE;
+namespaceElements: (
+		dataTypeDeclaration
+		| functionDeclaration
+		| fbDeclaration
+		| classDeclaration
+		| interfaceDeclaration
+		| namespaceDeclaration
+	)+;
+namespaceHName: namespaceName ( '.' namespaceName)*;
 namespaceName: IDENTIFIER;
+usingDirective: USING namespaceHName (',' namespaceHName)* ';';
 
-// User defined data type declaraction
+pouDeclaration:
+	usingDirective* (
+		globalVarDeclarations
+		| dataTypeDeclaration
+		| accessDeclarations
+		| functionDeclaration
+		| fbDeclaration
+		| classDeclaration
+		| interfaceDeclaration
+		| namespaceDeclaration
+	)+;
+
+// program declaration ////////////////////////////////////////////////////
+programDeclaration:
+	PROGRAM programTypeName (
+		ioVarDeclarations
+		| functionVarDeclarations
+		| tempVarDeclarations
+		| otherVarDeclarations
+		| locVarDeclarations
+		| programAccessDeclarations
+	)* fbBody END_PROGRAM;
+programTypeName: IDENTIFIER;
+programTypeAccess: ( namespaceName '.')* programTypeName;
+programAccessDeclarations:
+	VAR_ACCESS (programAccessDeclaration ';')* END_VAR;
+programAccessDeclaration:
+	accessName ':' symbolicVariable multibitPartAccess? ':' dataTypeAccess accessDirection?;
+
+// User defined data type declaraction /////////////////////////////////
 dataTypeDeclaration: TYPE ( typeDeclaration ';')+ END_TYPE;
 typeDeclaration:
 	simpleTypeDeclaration
@@ -38,7 +143,8 @@ numericTypeName: intTypeName | realTypeName;
 
 // subrange type declaration
 subrangeTypeDeclaration: subrangeTypeName ':' subrangeSpecInit;
-subrangeSpecInit: subrangeSpec ( ':=' (SIGNED_INT | UNSIGNED_INT))?;
+subrangeSpecInit:
+	subrangeSpec (':=' (SIGNED_INT | UNSIGNED_INT))?;
 subrangeSpec: intTypeName '(' subrange ')' | subrangeTypeAccess;
 subrange: constExpression '..' constExpression;
 
@@ -116,19 +222,61 @@ refSpecInit: refSpec ( ':=' refValue)?;
 refSpec: REF_TO+ dataTypeAccess;
 refTypeName: IDENTIFIER;
 refTypeAccess: ( namespaceName '.')* refTypeName;
-ref_Name: IDENTIFIER;
+refName: IDENTIFIER;
 refValue: refAddress | NULL;
 refAddress:
 	REF '(' (
-/*Symbolic_Variable*/
-		| /*FB_Instance_Name*/
-		| /*Class_Instance_Name*/
+		symbolicVariable
+		| fbInstanceName
+		| /*classInstanceName*/
 	) ')';
-refAssign: ref_Name ':=' ( ref_Name | refDereference | refValue);
-refDereference: ref_Name '^'+;
+refAssign: refName ':=' ( refName | refDereference | refValue);
+refDereference: refName '^'+;
 
+// function blocks //////////////////////////////////////////////////////////////////////////////////////
+fbTypeName: IDENTIFIER;
+fbTypeAccess: ( namespaceName '.')* fbTypeName;
+fbDeclaration:
+	FUNCTION_BLOCK (FINAL | ABSTRACT)? fbName usingDirective* (
+		EXTENDS (fbTypeAccess | classTypeAccess)
+	)? (IMPLEMENTS interfaceNameList)? (
+		fbIOVarDeclarations
+		| functionVarDeclarations
+		| tempVarDeclarations
+		| otherVarDeclarations
+	)* (methodDeclaration)* fbBody END_FUNCTION_BLOCK;
+fbIOVarDeclarations:
+	fbInputDeclarations
+	| fbOutputDeclarations
+	| inOutDeclarations;
+fbInputDeclarations:
+	VAR_INPUT (RETAIN | NON_RETAIN)? (fbInputDeclaration ';')* END_VAR;
+fbInputDeclaration:
+	varDeclarationInit
+	| arrayConformDeclaration;
+fbOutputDeclarations:
+	VAR_OUTPUT (RETAIN | NON_RETAIN)? (fbOutputDeclaration ';')* END_VAR;
+fbOutputDeclaration:
+	varDeclarationInit
+	| arrayConformDeclaration;
+otherVarDeclarations:
+	retainVarDeclarations
+	| nonRetainVarDeclarations
+	| locPartlyVarDeclaration;
+nonRetainVarDeclarations:
+	VAR NON_RETAIN accessSpec? (varDeclarationInit ';')* END_VAR;
+fbBody: statementList;
+methodDeclaration:
+	METHOD accessSpec (FINAL | ABSTRACT)? OVERRIDE? methodName (
+		':' dataTypeAccess
+	)? (
+		ioVarDeclarations
+		| functionVarDeclarations
+		| tempVarDeclarations
+	)* functionBody END_METHOD;
+methodName: IDENTIFIER;
 
-// Type accessing
+// Type accessing /////////////////////////////////////////////////////////////////////
 derivedTypeAccess:
 	singleElementTypeAccess
 	| arrayTypeAccess
@@ -163,10 +311,277 @@ arrayTypeName: IDENTIFIER;
 structTypeAccess: ( namespaceName '.')* structTypeName;
 structTypeName: IDENTIFIER;
 
-constExpression: expression;
-expression: literalValue;
+// Variable declarations ////////////////////////////////////////////////////////////////////////////////
+variable: directVariable | symbolicVariable;
+symbolicVariable: (( THIS '.') | ( namespaceName '.')+)? (
+		varAccess
+		| multiElementVar
+	);
+varAccess: varName | refDereference;
+varName: IDENTIFIER;
+multiElementVar: varAccess (subscriptList | structVariable)+;
+subscriptList: '[' subscript ( ',' subscript)* ']';
+subscript: expression;
+structVariable: '.' structElementSelect;
+structElementSelect: varAccess;
 
-// Literals
+// input variable declarations
+inputDeclarations:
+	VAR_INPUT (RETAIN | NON_RETAIN)? (inputDeclaration ';')* END_VAR;
+inputDeclaration:
+	varDeclarationInit
+	| /*Edge_Decl*/
+	| arrayConformDeclaration;
+//Edge_Decl  : : Variable_List ':' 'BOOL' ( 'R_EDGE' | 'F_EDGE' );
+varDeclarationInit:
+	variableList ':' (
+		simpleSpecInit
+		| strVarDeclaration
+		| refSpecInit
+	)
+	| arrayVarDeclarationInit
+	| structVarDeclarationInit
+	| fbDeclarationInit
+	| interfaceSpecInit;
+
+refVarDeclaration: variableList ':' refSpec;
+
+interfaceVarDeclaration: variableList ':' interfaceTypeAccess;
+variableList: variableName ( ',' variableName)*;
+variableName: IDENTIFIER;
+
+arrayVarDeclarationInit: variableList ':' arraySpecInit;
+arrayConformand: ARRAY '[' '*' ( ',' '*')* ']' OF dataTypeAccess;
+arrayConformDeclaration: variableList ':' arrayConformand;
+
+structVarDeclarationInit: variableList ':' structSpecInit;
+fbDeclarationNoInit: fbName ( ',' fbName)* ':' fbTypeAccess;
+fbDeclarationInit: fbDeclarationNoInit ( ':=' structInit)?;
+fbName: IDENTIFIER;
+fbInstanceName: ( namespaceName '.')* fbName '^'*;
+
+// output declarations
+outputDeclarations:
+	VAR_OUTPUT (RETAIN | NON_RETAIN)? (outputDeclaration ';')* END_VAR;
+outputDeclaration: varDeclarationInit | arrayConformDeclaration;
+inOutDeclarations:
+	VAR_IN_OUT (inOutVarDeclaration ';')* END_VAR;
+inOutVarDeclaration:
+	varDeclaration
+	| arrayConformDeclaration
+	| fbDeclarationNoInit;
+
+// normal variable declaration
+varDeclaration:
+	variableList ':' (
+		simpleSpec
+		| strVarDeclaration
+		| arrayVarDeclaration
+		| structVarDeclaration
+	);
+
+arrayVarDeclaration: variableList ':' arraySpec;
+
+structVarDeclaration: variableList ':' structTypeAccess;
+
+varDeclarations:
+	VAR CONSTANT? accessSpec? (varDeclarationInit ';')* END_VAR;
+
+retainVarDeclarations:
+	VAR RETAIN accessSpec? (varDeclarationInit ';')* END_VAR;
+
+locVarDeclarations:
+	VAR (CONSTANT | RETAIN | NON_RETAIN)? (locVarDeclaration ';')* END_VAR;
+locVarDeclaration: variableName? locatedAt ':' locVarSpecInit;
+
+tempVarDeclarations:
+	VAR_TEMP (
+		(
+			varDeclaration
+			| refVarDeclaration
+			| interfaceVarDeclaration
+		) ';'
+	)* END_VAR;
+
+externalVarDeclarations:
+	VAR_EXTERNAL CONSTANT? (externalDeclaration ';')* END_VAR;
+externalDeclaration:
+	globalVarName ':' (
+		simpleSpec
+		| arraySpec
+		| structTypeAccess
+		| fbTypeAccess
+		| refTypeAccess
+	);
+
+// global variables
+globalVarName: IDENTIFIER;
+globalVarDeclarations:
+	VAR_GLOBAL (CONSTANT | RETAIN)? (globalVarDeclaration ';')* END_VAR;
+globalVarDeclaration:
+	globalVarSpec ':' (locVarSpecInit | fbTypeAccess);
+globalVarSpec: (globalVarName ( ',' globalVarName)*)
+	| ( globalVarName locatedAt);
+locVarSpecInit:
+	simpleSpecInit
+	| arraySpecInit
+	| structSpecInit
+	| sByteStrSpec
+	| dByteStrSpec;
+
+strVarDeclaration: sByteStrVarDecl | dByteStrVarDeclaration;
+sByteStrVarDecl: variableList ':' sByteStrSpec;
+sByteStrSpec: STRING ( '[' ']')? ( ':=' SINGLE_BYTE_STRING)?;
+dByteStrVarDeclaration: variableList ':' dByteStrSpec;
+dByteStrSpec:
+	WSTRING ('[' UNSIGNED_INT ']')? (':=' DOUBLE_BYTE_STRING)?;
+locPartlyVarDeclaration:
+	VAR (RETAIN | NON_RETAIN)? locPartlyVar* END_VAR;
+locPartlyVar:
+	variableName AT PERCENT ('I' | 'Q' | 'M') '*' ':' varSpec ';';
+varSpec:
+	simpleSpec
+	| arraySpec
+	| structTypeAccess
+	| ( STRING | WSTRING) ( '[' UNSIGNED_INT ']')?;
+
+// Funtions ///////////////////////////////////////////////////////////////////////////////////////
+functionName: IDENTIFIER;
+functionAccess: ( namespaceName '.')* functionName;
+functionDeclaration:
+	FUNCTION functionName (':' dataTypeAccess)? usingDirective* (
+		ioVarDeclarations
+		| functionVarDeclarations
+		| tempVarDeclarations
+	)* functionBody END_FUNCTION;
+ioVarDeclarations:
+	inputDeclarations
+	| outputDeclarations
+	| inOutDeclarations;
+functionVarDeclarations:
+	externalVarDeclarations
+	| varDeclarations;
+functionBody: statementList;
+
+// Classes ////////////////////////////////////////////////////////////////////////////////////////////////////
+classDeclaration:
+	CLASS (FINAL | ABSTRACT)? classTypeName usingDirective* (
+		EXTENDS classTypeAccess
+	)? (IMPLEMENTS interfaceNameList)? (
+		functionVarDeclarations
+		| otherVarDeclarations
+	)* (methodDeclaration)* END_CLASS;
+classTypeName: IDENTIFIER;
+classTypeAccess: ( namespaceName '.')* classTypeName;
+className: IDENTIFIER;
+classInstanceName: ( namespaceName '.')* className '^'*;
+
+// interfaces
+interfaceDeclaration:
+	INTERFACE interfaceTypeName usingDirective* (
+		EXTENDS interfaceNameList
+	)? methodPrototype* END_INTERFACE;
+methodPrototype:
+	'METHOD' methodName (':' dataTypeAccess)? ioVarDeclarations* END_METHOD;
+interfaceSpecInit: variableList ( ':=' interfaceValue)?;
+interfaceValue:
+	symbolicVariable
+	| fbInstanceName
+	| classInstanceName
+	| NULL;
+interfaceNameList:
+	interfaceTypeAccess (',' interfaceTypeAccess)*;
+interfaceTypeName: IDENTIFIER;
+interfaceTypeAccess: ( namespaceName '.')* interfaceTypeName;
+interfaceName: IDENTIFIER;
+accessSpec: PUBLIC | PROTECTED | PRIVATE | INTERNAL;
+
+// Statements
+variableAccess: variable multibitPartAccess?;
+
+functionCall:
+	functionAccess '(' (parameterAssign ( ',' parameterAssign)*)? ')';
+
+statementList: ( statement? ';')*;
+statement:
+	assignStatement
+	| subprogControlStatement
+	| selectionStatement
+	| iterationStatement;
+assignStatement: (variable ':=' expression)
+	| refAssign
+	| assignmentAttempt;
+assignmentAttempt: (refName | refDereference) '?=' (
+		refName
+		| refDereference
+		| refValue
+	);
+
+invocation: (
+		fbInstanceName
+		| methodName
+		| THIS
+		| (
+			(THIS '.')? (
+				(( fbInstanceName | classInstanceName) '.')+
+			) methodName
+		)
+	) '(' (parameterAssign ( ',' parameterAssign)*)? ')';
+
+subprogControlStatement:
+	functionCall
+	| invocation
+	| SUPER '(' ')'
+	| RETURN;
+parameterAssign: (( variableName ':=')? expression)
+	| refAssign
+	| ( NOT? variableName '=>' variable);
+selectionStatement: ifStatement | caseStatement;
+ifStatement:
+	IF expression THEN statementList (
+		ELSIF expression THEN statementList
+	)* (ELSE statementList)? END_IF;
+caseStatement:
+	CASE expression OF caseSelection+ (ELSE statementList)? END_CASE;
+caseSelection: caseList ':' statementList;
+caseList: caseListElement ( ',' caseListElement)*;
+caseListElement: subrange | constExpression;
+iterationStatement:
+	forStatement
+	| whileStatement
+	| repeatStatement
+	| EXIT
+	| CONTINUE;
+forStatement:
+	FOR controlVariable ':=' forList DO statementList END_FOR;
+controlVariable: IDENTIFIER;
+forList: expression TO expression ( BY expression)?;
+whileStatement: WHILE expression DO statementList END_WHILE;
+repeatStatement:
+	REPEAT statementList UNTIL expression END_REPEAT;
+
+// expressions
+expression: xorExpression ( OR xorExpression)*;
+constExpression: expression;
+xorExpression: andExpression ( XOR andExpression)*;
+andExpression:
+	compareExpression (( '&' | 'AND') compareExpression)*;
+compareExpression: (equExpression ( ( '=' | '<>') equExpression)*);
+equExpression:
+	addExpression (( '<' | '>' | '<=' | '>=') addExpression)*;
+addExpression: term ( ( '+' | '-') term)*;
+term: powerExpression ( '*' | '/' | MOD powerExpression)*;
+powerExpression: unaryExpression ( '**' unaryExpression)*;
+unaryExpression: '-' | '+' | NOT? primaryExpression;
+primaryExpression:
+	literalValue
+	| enumValue
+	| variableAccess
+	| functionCall
+	| refValue
+	| '(' expression ')';
+
+// Literals /////////////////////////////////////////////////////////////////////////////////////////////////
 literalValue:
 	numericLiteral
 	| charLiteral
@@ -239,14 +654,21 @@ dateAndTimeTypeName:
 	| 'DT'
 	| 'LDT';
 
-// direct variables
+// direct variables //////////////////////////////////////////////////////////
 directVariable: DIRECT_VARIABLE;
 
-// LEXER /////////////////////////////////////////////////////////////////////////////////////////////
-// tu może być problem przy mnożeniu
+// LEXER //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// może być problem przy mnożeniu
 DIRECT_VARIABLE:
-	PERCENT ('I' | 'Q' | 'M')? ('X' | 'B' | 'W' | 'D' | 'L' | '*')? (UNSIGNED_INT (
-		DOT UNSIGNED_INT)*)?;
+	PERCENT ('I' | 'Q' | 'M')? (
+		'X'
+		| 'B'
+		| 'W'
+		| 'D'
+		| 'L'
+		| '*'
+	)? (UNSIGNED_INT ( DOT UNSIGNED_INT)*)?;
 // strings
 SINGLE_BYTE_STRING: '\'' SINGLE_BYTE_CHAR* '\'';
 DOUBLE_BYTE_STRING: '"' DOUBLE_BYTE_CHAR* '"';
@@ -326,13 +748,108 @@ STRUCT: 'STRUCT';
 OVERLAP: 'OVERLAP';
 END_STRUCT: 'END_STRUCT';
 
-//dirext variables
+// dirext variables
 AT: 'AT';
 
 // references
 REF_TO: 'REF_TO';
 REF: 'REF';
 NULL: 'NULL';
+
+// variable declarations
+THIS: 'THIS';
+VAR_INPUT: 'VAR_INPUT';
+VAR_OUTPUT: 'VAR_OUTPUT';
+VAR_IN_OUT: 'VAR_IN_OUT';
+RETAIN: 'RETAIN';
+NON_RETAIN: 'NON_RETAIN';
+END_VAR: 'END_VAR';
+VAR: 'VAR';
+CONSTANT: 'CONSTANT';
+VAR_TEMP: 'VAR_TEMP';
+VAR_EXTERNAL: 'VAR_EXTERNAL';
+VAR_GLOBAL: 'VAR_GLOBAL';
+
+// functions
+FUNCTION: 'FUNCTION';
+END_FUNCTION: 'END_FUNCTION';
+
+// function blocks and classes
+FUNCTION_BLOCK: 'FUNCTION_BLOCK';
+FINAL: 'FINAL';
+ABSTRACT: 'ABSTRACT';
+EXTENDS: 'EXTENDS';
+IMPLEMENTS: 'IMPLEMENTS';
+END_FUNCTION_BLOCK: 'END_FUNCTION_BLOCK';
+METHOD: 'METHOD';
+OVERRIDE: 'OVERRIDE';
+END_METHOD: 'END_METHOD';
+CLASS: 'CLASS';
+END_CLASS: 'END_CLASS';
+INTERFACE: 'INTERFACE';
+END_INTERFACE: 'END_INTERFACE';
+PUBLIC: 'PUBLIC';
+PROTECTED: 'PROTECTED';
+PRIVATE: 'PRIVATE';
+INTERNAL: 'INTERAL';
+
+// program declaration
+PROGRAM: 'PROGRAM';
+END_PROGRAM: 'END_PROGRAM';
+VAR_ACCESS: 'VAR_ACCESS';
+
+// configuration and resource declaration
+CONFIGURATION: 'CONFIGURATION';
+END_CONFIGURATION: 'END_CONFIGURATION';
+RESOURCE: 'RESOURCE';
+ON: 'ON';
+END_RESOURCE: 'END_RESOURCE';
+READ_WRITE: 'READ_WRITE';
+READ_ONLY: 'READ_ONLY';
+TASK: 'TASK';
+SINGLE: 'SINGLE';
+INTERVAL: 'INTERVAL';
+PRIORITY: 'PRIORITY';
+WITH: 'WITH';
+VAR_CONFIG: 'VAR_CONFIG';
+
+// namespace
+NAMESPACE: 'NAMESPACE';
+END_NAMESPACE: 'END_NAMESPACE';
+USING: 'USING';
+
+// logical expressions
+AND: 'AND';
+OR: 'OR';
+XOR: 'XOR';
+NOT: 'NOT';
+MOD: 'MOD';
+
+SUPER: 'SUPER';
+RETURN: 'RETURN';
+
+// selection statements
+IF: 'IF';
+THEN: 'THEN';
+ELSIF: 'ELSIF';
+ELSE: 'ELSE';
+END_IF: 'END_IF';
+CASE: 'CASE';
+END_CASE: 'END_CASE';
+
+// loop statements
+EXIT: 'EXIT';
+CONTINUE: 'CONTINUE';
+FOR: 'FOR';
+TO: 'TO';
+BY: 'BY';
+DO: 'DO';
+END_FOR: 'END_FOR';
+WHILE: 'WHILE';
+END_WHILE: 'END_WHILE';
+REPEAT: 'REPEAT';
+UNTIL: 'UNTIL';
+END_REPEAT: 'END_REPEAT';
 
 // special characters
 DOT: '.';
