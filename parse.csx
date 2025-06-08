@@ -1,5 +1,4 @@
 #load "stLexer.cs"
-#load "stListener.cs"
 #load "stParser.cs"
 #load "stVisitor.cs"
 
@@ -40,7 +39,7 @@ var tokens = new CommonTokenStream(lexer);
 var parser = new stParser(tokens);
 
 // Wypisanie drzewa gramatyki w konsoli i do pliku .dot
-var tree = parser.program();
+var tree = parser.file();
 
 
 var dot = ToDot(tree, parser);

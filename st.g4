@@ -3,14 +3,13 @@ grammar st;
 // namespace: (program | function | fb | global_var | class)*;
 
 // Parser ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-program:
-	PROGRAM (literalValue | dataTypeDeclaration | directVariable) END_PROGRAM ';'?;
+file: (configDeclaration | programDeclaration | pouDeclaration)*;
 
 // configuration and resource decaration//////////////////////////////////////////////////////////////////
-configName: IDENTIFIER;
+configurationName: IDENTIFIER;
 resourceTypeName: IDENTIFIER;
 configDeclaration:
-	CONFIGURATION configName globalVarDeclarations? (
+	CONFIGURATION configurationName globalVarDeclarations? (
 		singleResourceDeclaration
 		| resourceDeclaration+
 	) accessDeclarations? configInit? END_CONFIGURATION;
@@ -83,6 +82,7 @@ namespaceElements: (
 		| interfaceDeclaration
 		| namespaceDeclaration
 	)+;
+
 namespaceHName: namespaceName ( '.' namespaceName)*;
 namespaceName: IDENTIFIER;
 usingDirective: USING namespaceHName (',' namespaceHName)* ';';
@@ -99,7 +99,7 @@ pouDeclaration:
 		| namespaceDeclaration
 	)+;
 
-// program declaration ////////////////////////////////////////////////////
+// program declaration /////////////////////////////////////////////////////////////////////////////////////////////////////
 programDeclaration:
 	PROGRAM programTypeName (
 		ioVarDeclarations
@@ -116,7 +116,7 @@ programAccessDeclarations:
 programAccessDeclaration:
 	accessName ':' symbolicVariable multibitPartAccess? ':' dataTypeAccess accessDirection?;
 
-// User defined data type declaraction /////////////////////////////////
+// User defined data type declaraction ////////////////////////////////////////////////////////////////////////////////////////
 dataTypeDeclaration: TYPE ( typeDeclaration ';')+ END_TYPE;
 typeDeclaration:
 	simpleTypeDeclaration
@@ -199,7 +199,7 @@ locatedAt: AT directVariable;
 multibitPartAccess:
 	'.' (
 		UNSIGNED_INT
-		| '%' ( 'X' | 'B' | 'W' | 'D' | 'L')? UNSIGNED_INT
+		| DIRECT_PART_ACCESS
 	);
 structElementName: IDENTIFIER;
 structInit: '(' structElementInit ( ',' structElementInit)* ')';
@@ -228,7 +228,7 @@ refAddress:
 	REF '(' (
 		symbolicVariable
 		| fbInstanceName
-		| /*classInstanceName*/
+		| classInstanceName
 	) ')';
 refAssign: refName ':=' ( refName | refDereference | refValue);
 refDereference: refName '^'+;
@@ -438,7 +438,7 @@ dByteStrSpec:
 locPartlyVarDeclaration:
 	VAR (RETAIN | NON_RETAIN)? locPartlyVar* END_VAR;
 locPartlyVar:
-	variableName AT PERCENT ('I' | 'Q' | 'M') '*' ':' varSpec ';';
+	variableName AT PARTLY_DIRECT_VARIABLE ':' varSpec ';';
 varSpec:
 	simpleSpec
 	| arraySpec
@@ -482,7 +482,7 @@ interfaceDeclaration:
 		EXTENDS interfaceNameList
 	)? methodPrototype* END_INTERFACE;
 methodPrototype:
-	'METHOD' methodName (':' dataTypeAccess)? ioVarDeclarations* END_METHOD;
+	METHOD methodName (':' dataTypeAccess)? ioVarDeclarations* END_METHOD;
 interfaceSpecInit: variableList ( ':=' interfaceValue)?;
 interfaceValue:
 	symbolicVariable
@@ -565,7 +565,7 @@ expression: xorExpression ( OR xorExpression)*;
 constExpression: expression;
 xorExpression: andExpression ( XOR andExpression)*;
 andExpression:
-	compareExpression (( '&' | 'AND') compareExpression)*;
+	compareExpression (( '&' | AND) compareExpression)*;
 compareExpression: (equExpression ( ( '=' | '<>') equExpression)*);
 equExpression:
 	addExpression (( '<' | '>' | '<=' | '>=') addExpression)*;
@@ -658,8 +658,8 @@ dateAndTimeTypeName:
 directVariable: DIRECT_VARIABLE;
 
 // LEXER //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// może być problem przy mnożeniu
+PARTLY_DIRECT_VARIABLE: PERCENT ('I' | 'Q' | 'M') '*';
+DIRECT_PART_ACCESS: PERCENT ( 'X' | 'B' | 'W' | 'D' | 'L')? UNSIGNED_INT;
 DIRECT_VARIABLE:
 	PERCENT ('I' | 'Q' | 'M')? (
 		'X'
@@ -669,6 +669,8 @@ DIRECT_VARIABLE:
 		| 'L'
 		| '*'
 	)? (UNSIGNED_INT ( DOT UNSIGNED_INT)*)?;
+
+
 // strings
 SINGLE_BYTE_STRING: '\'' SINGLE_BYTE_CHAR* '\'';
 DOUBLE_BYTE_STRING: '"' DOUBLE_BYTE_CHAR* '"';

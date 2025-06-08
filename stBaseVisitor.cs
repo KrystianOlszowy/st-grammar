@@ -35,7 +35,7 @@ using ParserRuleContext = Antlr4.Runtime.ParserRuleContext;
 [System.CLSCompliant(false)]
 public partial class stBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IstVisitor<Result> {
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="stParser.program"/>.
+	/// Visit a parse tree produced by <see cref="stParser.file"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -43,9 +43,9 @@ public partial class stBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, I
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitProgram([NotNull] stParser.ProgramContext context) { return VisitChildren(context); }
+	public virtual Result VisitFile([NotNull] stParser.FileContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="stParser.configName"/>.
+	/// Visit a parse tree produced by <see cref="stParser.configurationName"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -53,7 +53,7 @@ public partial class stBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, I
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitConfigName([NotNull] stParser.ConfigNameContext context) { return VisitChildren(context); }
+	public virtual Result VisitConfigurationName([NotNull] stParser.ConfigurationNameContext context) { return VisitChildren(context); }
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="stParser.resourceTypeName"/>.
 	/// <para>

@@ -1,6 +1,5 @@
 (*$DIR var*)
 { }
-prograM
 
 ////////////////////////////////
 /* /* Numeric and logic literals */ */
@@ -151,17 +150,44 @@ END_TYPE
 */
 
 // REFERENCE DATA TYPES //////////////////////////////////////
-TYPE 
+/*TYPE 
  myArrType1:  ARRAY[0..999] OF INT; 
  myArrType2:  myArrType1; 
  myRefType1:  REF_TO myArrType1; 
  myRefType2:  REF_TO myArrType2; 
 END_TYPE
+*/
 
+/*VAR_GLOBAL 
+  DataArray: ARRAY [0..100] OF INT; 
+END_VAR 
+*/
+
+FUNCTION SPECIAL_FUN   
+  VAR_INPUT 
+    FirstIndex: INT; 
+    LastIndex:  INT;  
+  END_VAR 
+  VAR_OUTPUT 
+    Sum: INT;  
+  END_VAR 
+  VAR_EXTERNAL DataArray:  
+      ARRAY [0..100] OF INT;  
+  END_VAR 
+
+  VAR 
+    b : INT ; 
+    Sum : INT:= 0; 
+  END_VAR 
+
+  FOR  i := FirstIndex TO LastIndex DO 
+    Sum:= Sum + DataArray[i]; 
+  END_FOR 
+
+END_FUNCTION
 
 /////////////////////////////////////////////////////////
 // Polecenia do testowania tworzenia drzew składniowych:
 /////////////////////////////////////////////////////////
 // >>dotnet-script parse.csx
 // >>dot -Tpng tree.dot -o tree.png
-end_program;
