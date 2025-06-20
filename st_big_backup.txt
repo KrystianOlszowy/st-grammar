@@ -1,7 +1,5 @@
 grammar st;
 
-// TO DO: - classes - interfaces - everything above functions [line 447]
-
 // namespace: (program | function | fb | global_var | class)*;
 
 // Parser ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -131,25 +129,24 @@ typeDeclaration:
 
 // simple type declaration
 simpleTypeDeclaration: simpleTypeName ':' simpleSpecInit;
-simpleSpecInit: simpleSpec ( ':=' expression)?;
+simpleSpecInit: simpleSpec ( ':=' constExpression)?;
 simpleSpec: elementTypeName | simpleTypeAccess;
 elementTypeName:
-	intTypeName
-	| realTypeName
+	numericTypeName
 	| boolTypeName
 	| derivedTypeAccess
 	| multibitsTypeName
 	| stringTypeName
 	| dateTypeName
-	| dateAndTimeTypeName
 	| durationTypeName;
+numericTypeName: intTypeName | realTypeName;
 
 // subrange type declaration
 subrangeTypeDeclaration: subrangeTypeName ':' subrangeSpecInit;
 subrangeSpecInit:
 	subrangeSpec (':=' (SIGNED_INT | UNSIGNED_INT))?;
 subrangeSpec: intTypeName '(' subrange ')' | subrangeTypeAccess;
-subrange: expression '..' expression;
+subrange: constExpression '..' constExpression;
 
 // enumeration type declaration
 enumTypeDeclaration:
@@ -163,7 +160,8 @@ enumSpecInit: (
 		( '(' IDENTIFIER ( ',' IDENTIFIER)* ')')
 		| enumTypeAccess
 	) (':=' enumValue)?;
-enumValueSpec: IDENTIFIER (':=' ( intLiteral | expression))?;
+enumValueSpec:
+	IDENTIFIER (':=' ( intLiteral | constExpression))?;
 enumValue: ( enumTypeName '#')? IDENTIFIER;
 
 // array type declaration
@@ -178,7 +176,7 @@ arrayElementInit:
 	arrayElementInitValue
 	| UNSIGNED_INT '(' arrayElementInitValue? ')';
 arrayElementInitValue:
-	expression
+	constExpression
 	| enumValue
 	| structInit
 	| arrayInit;
@@ -197,13 +195,13 @@ structElementDeclaration:
 		| arraySpecInit
 		| structSpecInit
 	);
-locatedAt: AT (directVariable | DIRECT_PART_ACCESS);
+locatedAt: AT directVariable;
 multibitPartAccess: '.' ( UNSIGNED_INT | DIRECT_PART_ACCESS);
 structElementName: IDENTIFIER;
 structInit: '(' structElementInit ( ',' structElementInit)* ')';
 structElementInit:
 	structElementName ':=' (
-		expression
+		constExpression
 		| enumValue
 		| arrayInit
 		| structInit
@@ -276,9 +274,7 @@ methodName: IDENTIFIER;
 
 // Type accessing /////////////////////////////////////////////////////////////////////
 derivedTypeAccess:
-	simpleTypeAccess
-	| subrangeTypeAccess
-	| enumTypeAccess
+	singleElementTypeAccess
 	| arrayTypeAccess
 	| structTypeAccess
 	| stringTypeAccess
@@ -290,6 +286,11 @@ stringTypeAccess: ( namespaceName '.')* stringTypeName;
 stringTypeName: (STRING | WSTRING) ('[' UNSIGNED_INT ']')?
 	| CHAR
 	| WCHAR;
+
+singleElementTypeAccess:
+	simpleTypeAccess
+	| subrangeTypeAccess
+	| enumTypeAccess;
 
 simpleTypeAccess: ( namespaceName '.')* simpleTypeName;
 simpleTypeName: IDENTIFIER;
@@ -323,8 +324,11 @@ structElementSelect: varAccess;
 // input variable declarations
 inputDeclarations:
 	VAR_INPUT (RETAIN | NON_RETAIN)? (inputDeclaration ';')* END_VAR;
-inputDeclaration: varDeclarationInit | arrayConformDeclaration;
-
+inputDeclaration:
+	varDeclarationInit
+	| /*Edge_Decl*/
+	| arrayConformDeclaration;
+//Edge_Decl  : : Variable_List ':' 'BOOL' ( 'R_EDGE' | 'F_EDGE' );
 varDeclarationInit:
 	variableList ':' (
 		simpleSpecInit
@@ -347,7 +351,6 @@ arrayConformand: ARRAY '[' '*' ( ',' '*')* ']' OF dataTypeAccess;
 arrayConformDeclaration: variableList ':' arrayConformand;
 
 structVarDeclarationInit: variableList ':' structSpecInit;
-
 fbDeclarationNoInit: fbName ( ',' fbName)* ':' fbTypeAccess;
 fbDeclarationInit: fbDeclarationNoInit ( ':=' structInit)?;
 fbName: IDENTIFIER;
@@ -410,14 +413,11 @@ externalDeclaration:
 // global variables
 globalVarName: IDENTIFIER;
 globalVarDeclarations:
-	VAR_GLOBAL (CONSTANT | RETAIN)? (
-		globalVarDeclaration SEMICOLON
-	)* END_VAR;
+	VAR_GLOBAL (CONSTANT | RETAIN)? (globalVarDeclaration ';')* END_VAR;
 globalVarDeclaration:
-	globalVarSpec COLON (locVarSpecInit | fbTypeAccess);
-globalVarSpec:
-	globalVarName (COMMA globalVarName)*
-	| globalVarName locatedAt;
+	globalVarSpec ':' (locVarSpecInit | fbTypeAccess);
+globalVarSpec: (globalVarName ( ',' globalVarName)*)
+	| ( globalVarName locatedAt);
 locVarSpecInit:
 	simpleSpecInit
 	| arraySpecInit
@@ -427,41 +427,39 @@ locVarSpecInit:
 
 strVarDeclaration: sByteStrVarDecl | dByteStrVarDeclaration;
 sByteStrVarDecl: variableList ':' sByteStrSpec;
-sByteStrSpec:
-	STRING ('[' UNSIGNED_INT ']')? (':=' SINGLE_BYTE_STRING)?;
+sByteStrSpec: STRING ( '[' ']')? ( ':=' SINGLE_BYTE_STRING)?;
 dByteStrVarDeclaration: variableList ':' dByteStrSpec;
 dByteStrSpec:
 	WSTRING ('[' UNSIGNED_INT ']')? (':=' DOUBLE_BYTE_STRING)?;
 locPartlyVarDeclaration:
 	VAR (RETAIN | NON_RETAIN)? locPartlyVar* END_VAR;
 locPartlyVar:
-	variableName AT DIRECT_PART_ACCESS ':' varSpec ';';
+	variableName AT PARTLY_DIRECT_VARIABLE ':' varSpec ';';
 varSpec:
 	simpleSpec
 	| arraySpec
 	| structTypeAccess
 	| ( STRING | WSTRING) ( '[' UNSIGNED_INT ']')?;
 
-// Funtions [OK]
+// Funtions ///////////////////////////////////////////////////////////////////////////////////////
+functionName: IDENTIFIER;
+functionAccess: ( namespaceName '.')* functionName;
 functionDeclaration:
-	FUNCTION functionName (COLON dataTypeAccess)? usingDirective* (
+	FUNCTION functionName (':' dataTypeAccess)? usingDirective* (
 		ioVarDeclarations
 		| functionVarDeclarations
 		| tempVarDeclarations
 	)* functionBody END_FUNCTION;
-
 ioVarDeclarations:
 	inputDeclarations
 	| outputDeclarations
 	| inOutDeclarations;
-
 functionVarDeclarations:
 	externalVarDeclarations
 	| varDeclarations;
-
 functionBody: statementList;
 
-// classes
+// Classes ////////////////////////////////////////////////////////////////////////////////////////////////////
 classDeclaration:
 	CLASS (FINAL | ABSTRACT)? classTypeName usingDirective* (
 		EXTENDS classTypeAccess
@@ -470,73 +468,70 @@ classDeclaration:
 		| otherVarDeclarations
 	)* (methodDeclaration)* END_CLASS;
 classTypeName: IDENTIFIER;
-classTypeAccess: ( namespaceName DOT)* classTypeName;
-
+classTypeAccess: ( namespaceName '.')* classTypeName;
 className: IDENTIFIER;
-classInstanceName: ( namespaceName DOT)* className CARET*;
+classInstanceName: ( namespaceName '.')* className '^'*;
 
-// interfaces 
+// interfaces
 interfaceDeclaration:
 	INTERFACE interfaceTypeName usingDirective* (
 		EXTENDS interfaceNameList
 	)? methodPrototype* END_INTERFACE;
 methodPrototype:
-	METHOD methodName (COLON dataTypeAccess)? ioVarDeclarations* END_METHOD;
-interfaceSpecInit: variableList ( ASSIGN interfaceValue)?;
+	METHOD methodName (':' dataTypeAccess)? ioVarDeclarations* END_METHOD;
+interfaceSpecInit: variableList ( ':=' interfaceValue)?;
 interfaceValue:
 	symbolicVariable
 	| fbInstanceName
 	| classInstanceName
 	| NULL;
 interfaceNameList:
-	interfaceTypeAccess (COLON interfaceTypeAccess)*;
+	interfaceTypeAccess (',' interfaceTypeAccess)*;
 interfaceTypeName: IDENTIFIER;
-interfaceTypeAccess: ( namespaceName DOT)* interfaceTypeName;
+interfaceTypeAccess: ( namespaceName '.')* interfaceTypeName;
 interfaceName: IDENTIFIER;
 accessSpec: PUBLIC | PROTECTED | PRIVATE | INTERNAL;
 
-// Statements, [OK]
-statementList: (statement? SEMICOLON)*;
+// Statements
+variableAccess: variable multibitPartAccess?;
+
+functionCall:
+	functionAccess '(' (parameterAssign ( ',' parameterAssign)*)? ')';
+
+statementList: ( statement? ';')*;
 statement:
 	assignStatement
 	| subprogControlStatement
 	| selectionStatement
-	| loopStatement;
-
-assignStatement: (variable ASSIGN expression)
+	| iterationStatement;
+assignStatement: (variable ':=' expression)
 	| refAssign
 	| assignmentAttempt;
-
-assignmentAttempt: (refName | dereference) ATTEMPT_ASSIGN (
+assignmentAttempt: (refName | dereference) '?=' (
 		refName
 		| dereference
 		| refValue
 	);
 
+invocation: (
+		fbInstanceName
+		| methodName
+		| THIS
+		| (
+			(THIS '.')? (
+				(( fbInstanceName | classInstanceName) '.')+
+			) methodName
+		)
+	) '(' (parameterAssign ( ',' parameterAssign)*)? ')';
+
 subprogControlStatement:
 	functionCall
 	| invocation
-	| SUPER LEFT_PAREN RIGHT_PAREN
+	| SUPER '(' ')'
 	| RETURN;
-
-functionCall:
-	functionAccess LEFT_BRACKET (
-		parameterAssign ( COMMA parameterAssign)*
-	)? RIGHT_PAREN;
-
-functionAccess: ( namespaceName DOT)* functionName;
-functionName: IDENTIFIER;
-
-invocation: (
-		fbInstanceName
-		| (THIS DOT)? (
-			(( fbInstanceName | classInstanceName) DOT)+
-		) methodName
-	) LEFT_PAREN (parameterAssign (COMMA parameterAssign)*)? RIGHT_PAREN;
-
-parameterAssign: (( variableName ASSIGN)? expression)
+parameterAssign: (( variableName ':=')? expression)
 	| refAssign
-	| ( NOT? variableName ASSIGN_OUT variable);
+	| ( NOT? variableName '=>' variable);
 
 // selection statements
 selectionStatement: ifStatement | caseStatement;
@@ -544,88 +539,76 @@ ifStatement:
 	IF expression THEN statementList (
 		ELSIF expression THEN statementList
 	)* (ELSE statementList)? END_IF;
-
-// case
 caseStatement:
 	CASE expression OF caseSelection+ (ELSE statementList)? END_CASE;
-caseSelection: caseList COLON statementList;
-caseList: caseListElement (COMMA caseListElement)*;
-caseListElement: subrange | expression;
+caseSelection: caseList ':' statementList;
+caseList: caseListElement ( ',' caseListElement)*;
+caseListElement: subrange | constExpression;
 
 // iteration statements
-loopStatement:
+iterationStatement:
 	forStatement
 	| whileStatement
 	| repeatStatement
 	| EXIT
 	| CONTINUE;
-
-// for
 forStatement:
-	FOR controlVariable ASSIGN forRange DO statementList END_FOR;
+	FOR controlVariable ':=' forList DO statementList END_FOR;
 controlVariable: IDENTIFIER;
-forRange: expression TO expression (BY expression)?;
-
-// while
+forList: expression TO expression ( BY expression)?;
 whileStatement: WHILE expression DO statementList END_WHILE;
-
-// repeat
 repeatStatement:
 	REPEAT statementList UNTIL expression END_REPEAT;
 
-// expressions, ułożone zgodnie z normą [OK]
+// expressions
+constExpression: expression;
+
+// ułożone zgodnie z normą [OK]
 expression:
-	(literalValue | variableAccess | enumValue | refValue)	# primaryExpression
-	| LEFT_PAREN expression RIGHT_PAREN						# bracketedExpression
-	| functionCall											# funcCallExpression
-	| dereference											# derefExpression
-	| ( PLUS | MINUS | NOT) expression						# unaryExpression
-	| <assoc = right> expression POWER expression			# exponentExpression
-	| expression (ASTERISK | SLASH | MOD) expression		# multDivModExpression
-	| expression (PLUS | MINUS) expression					# addSubExpression
-	| expression (
-		LESS
-		| GREATER
-		| LESS_EQUAL
-		| GREATER_EQUAL
-		| EQUAL
-		| NOT_EQUAL
-	) expression								# comparisonExpression
-	| expression (AMPERSAND | AND) expression	# andExpression
-	| expression XOR expression					# xorExpression
-	| expression OR expression					# orExpression;
+	primaryExpression												# primeExpression
+	| '(' expression ')'											# bracketedExpression
+	| functionCall													# funcCallExpression
+	| dereference													# derefExpression
+	| ( '-' | '+' | NOT) expression									# unaryExpression
+	| <assoc = right> expression '**' expression					# exponentExpression
+	| expression ('*' | '/' | MOD) expression						# multDivModExpression
+	| expression ('+' | '-') expression								# addSubExpression
+	| expression ('<' | '>' | '<=' | '>=' | '=' | '<>') expression	# comparisonExpression
+	| expression ('&' | AND) expression								# andExpression
+	| expression XOR expression										# xorExpr
+	| expression OR expression										# OrExpr;
 
-variableAccess: variable multibitPartAccess?;
+// ułożone według intuicji, raczej dobrze [OK]
+primaryExpression:
+	literalValue
+	| variableAccess
+	| enumValue
+	| refValue;
 
-// Literals, oczyszczone z nadmiernego zagnieżdżenia [OK]
+// Literals /////////////////////////////////////////////////////////////////////////////////////////////////
 literalValue:
-	intLiteral
-	| realLiteral
+	numericLiteral
 	| charLiteral
 	| timeLiteral
 	| multibitsLiteral
 	| boolLiteral;
 
+numericLiteral: intLiteral | realLiteral;
+
 // integer literals
-intLiteral: (intTypeName HASH)? intLiteralValue;
+intLiteral: (intTypeName '#')? intLiteralValue;
 intLiteralValue:
 	SIGNED_INT
 	| UNSIGNED_INT
 	| BINARY_INT
 	| OCTAL_INT
 	| HEX_INT;
-intTypeName:
-	USINT
-	| UINT
-	| UDINT
-	| ULINT
-	| SINT
-	| INT
-	| DINT
-	| LINT;
+intTypeName: unsignedIntTypeName | signedIntTypeName;
+unsignedIntTypeName: USINT | UINT | UDINT | ULINT;
+signedIntTypeName: SINT | INT | DINT | LINT;
 
 // multibits literals
-multibitsLiteral: (multibitsTypeName HASH)? multibitsLiteralValue;
+multibitsLiteral: (multibitsTypeName '#')? multibitsLiteralValue;
 multibitsLiteralValue:
 	UNSIGNED_INT
 	| BINARY_INT
@@ -634,53 +617,63 @@ multibitsLiteralValue:
 multibitsTypeName: BYTE | WORD | DWORD | LWORD;
 
 // real literals
-realLiteral: (realTypeName HASH)? realLiteralValue;
-realLiteralValue: REAL_VALUE;
+realLiteral: (realTypeName '#')? realLiteralValue;
+realLiteralValue: GENERAL_REAL;
 realTypeName: REAL | LREAL;
 
 // bool literals
-boolLiteral: (boolTypeName HASH)? boolLiteralValue;
+boolLiteral: (boolTypeName '#')? boolLiteralValue;
 boolLiteralValue: BOOLEAN | UNSIGNED_INT;
 boolTypeName: BOOL;
 
 // character literals
-charLiteral: (charTypeName HASH)? charString;
+charLiteral: ( charTypeName '#')? charString;
 charString: SINGLE_BYTE_STRING | DOUBLE_BYTE_STRING;
-charTypeName: CHAR | STRING | WCHAR | WSTRING;
+charTypeName: STRING | CHAR | WSTRING | WCHAR;
 
-// time literals, opisane z małym odbiegiem od normy, można deklarować D i T [OK]
+// time literals
 timeLiteral:
 	durationLiteral
 	| timeOfDayLiteral
 	| dateLiteral
 	| dateAndTimeLiteral;
 
-durationLiteral: (durationTypeName) HASH durationLiteralValue;
+durationLiteral: (durationTypeName) '#' durationLiteralValue;
 durationLiteralValue: DURATION;
-durationTypeName: TIME | LTIME;
+durationTypeName: TIME | LTIME | 'T' | 'LT';
 
-timeOfDayLiteral: timeOfDayTypeName HASH timeOfDayLiteralValue;
+timeOfDayLiteral: timeOfDayTypeName '#' timeOfDayLiteralValue;
 timeOfDayLiteralValue: CLOCK_TIME;
-timeOfDayTypeName: TIME_OF_DAY | LTIME_OF_DAY;
+timeOfDayTypeName: TIME_OF_DAY | LTIME_OF_DAY | 'TOD' | 'LTOD';
 
-dateLiteral: (dateTypeName) HASH dateLiteralValue;
+dateLiteral: (dateTypeName) '#' dateLiteralValue;
 dateLiteralValue: DATE_VALUE;
-dateTypeName: DATE | LDATE;
+dateTypeName: DATE | LDATE | 'D' | 'LD';
 
-dateAndTimeLiteral: (dateAndTimeTypeName) HASH dateAndTimeLiteralValue;
+dateAndTimeLiteral: (dateAndTimeTypeName) '#' dateAndTimeLiteralValue;
 dateAndTimeLiteralValue: DATE_TIME_VALUE;
-dateAndTimeTypeName: DATE_AND_TIME | LDATE_AND_TIME;
+dateAndTimeTypeName:
+	DATE_AND_TIME
+	| LDATE_AND_TIME
+	| 'DT'
+	| 'LDT';
 
 // direct variables //////////////////////////////////////////////////////////
 directVariable: DIRECT_VARIABLE;
 
 // LEXER //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+PARTLY_DIRECT_VARIABLE: PERCENT ('I' | 'Q' | 'M') '*';
 DIRECT_PART_ACCESS:
-	'%' ('X' | 'B' | 'W' | 'D' | 'L')? UNSIGNED_INT;
+	PERCENT ('X' | 'B' | 'W' | 'D' | 'L')? UNSIGNED_INT;
 DIRECT_VARIABLE:
-	'%' ('I' | 'Q' | 'M') ('X' | 'B' | 'W' | 'D' | 'L' | '*')? (
-		UNSIGNED_INT ( '.' UNSIGNED_INT)*
-	)?;
+	PERCENT ('I' | 'Q' | 'M')? (
+		'X'
+		| 'B'
+		| 'W'
+		| 'D'
+		| 'L'
+		| '*'
+	)? (UNSIGNED_INT ( DOT UNSIGNED_INT)*)?;
 
 // strings
 SINGLE_BYTE_STRING: '\'' SINGLE_BYTE_CHAR* '\'';
@@ -688,16 +681,16 @@ DOUBLE_BYTE_STRING: '"' DOUBLE_BYTE_CHAR* '"';
 
 // date and time
 DURATION: ('+' | '-')? (DIGIT+ DURATION_UNIT '_'?)+ DIGIT+ (
-		'.' DIGIT+
+		DOT DIGIT+
 	)? DURATION_UNIT;
 DATE_TIME_VALUE: DATE_VALUE '-' CLOCK_TIME;
 DATE_VALUE:
 	DIGIT DIGIT DIGIT DIGIT '-' DIGIT DIGIT '-' DIGIT DIGIT;
 CLOCK_TIME:
-	DIGIT DIGIT ':' DIGIT DIGIT ':' UNSIGNED_INT '.' UNSIGNED_INT;
+	DIGIT DIGIT ':' DIGIT DIGIT ':' UNSIGNED_INT DOT UNSIGNED_INT;
 
 // simple data types //
-REAL_VALUE: ('+' | '-')? UNSIGNED_INT '.' UNSIGNED_INT (
+GENERAL_REAL: ('+' | '-')? UNSIGNED_INT DOT UNSIGNED_INT (
 		'E' (SIGNED_INT | UNSIGNED_INT)
 	)?;
 SIGNED_INT: ( '+' | '-') UNSIGNED_INT;
@@ -739,14 +732,14 @@ CHAR: 'CHAR';
 WCHAR: 'WCHAR';
 
 // data type names
-TIME: 'TIME' | 'T';
-LTIME: 'LTIME' | 'LT';
-TIME_OF_DAY: 'TIME_OF_DAY' | 'TOD';
-LTIME_OF_DAY: 'LTIME_OF_DAY' | 'LTOD';
-DATE: 'DATE' | 'D';
-LDATE: 'LDATE' | 'LD';
-DATE_AND_TIME: 'DATE_AND_TIME' | 'DT';
-LDATE_AND_TIME: 'LDATE_AND_TIME' | 'LDT';
+TIME: 'TIME';
+LTIME: 'LTIME';
+TIME_OF_DAY: 'TIME_OF_DAY';
+LTIME_OF_DAY: 'LTIME_OF_DAY';
+DATE: 'DATE';
+LDATE: 'LDATE';
+DATE_AND_TIME: 'DATE_AND_TIME';
+LDATE_AND_TIME: 'LDATE_AND_TIME';
 
 // user defined data types
 TYPE: 'TYPE';
@@ -805,8 +798,6 @@ PUBLIC: 'PUBLIC';
 PROTECTED: 'PROTECTED';
 PRIVATE: 'PRIVATE';
 INTERNAL: 'INTERAL';
-SUPER: 'SUPER';
-RETURN: 'RETURN';
 
 // program declaration
 PROGRAM: 'PROGRAM';
@@ -833,6 +824,16 @@ NAMESPACE: 'NAMESPACE';
 END_NAMESPACE: 'END_NAMESPACE';
 USING: 'USING';
 
+// logical expressions
+AND: 'AND';
+OR: 'OR';
+XOR: 'XOR';
+NOT: 'NOT';
+MOD: 'MOD';
+
+SUPER: 'SUPER';
+RETURN: 'RETURN';
+
 // selection statements
 IF: 'IF';
 THEN: 'THEN';
@@ -856,50 +857,9 @@ REPEAT: 'REPEAT';
 UNTIL: 'UNTIL';
 END_REPEAT: 'END_REPEAT';
 
-// Special characters // arithmetic
-PLUS: '+';
-MINUS: '-';
-ASTERISK: '*';
-POWER: '**';
-SLASH: '/';
-MOD: 'MOD';
-
-// relational
-EQUAL: '=';
-NOT_EQUAL: '<>';
-LESS: '<';
-LESS_EQUAL: '<=';
-GREATER: '>';
-GREATER_EQUAL: '>=';
-
-// logical/bitwise
-AND: 'AND';
-OR: 'OR';
-NOT: 'NOT';
-XOR: 'XOR';
-AMPERSAND: '&';
-
-// assignment
-ASSIGN: ':=';
-ASSIGN_OUT: '=>';
-ATTEMPT_ASSIGN: '?=';
-
-// delimiters
-LEFT_PAREN: '(';
-RIGHT_PAREN: ')';
-LEFT_BRACKET: '[';
-RIGHT_BRACKET: ']';
-COMMA: ',';
-COLON: ':';
-SEMICOLON: ';';
+// special characters
 DOT: '.';
-RANGE: '..';
-
-// others
-HASH: '#';
-CARET: '^';
 PERCENT: '%';
-UNDERSCORE: '_';
 
 // essential fragments
 fragment NON_DIGIT: [a-zA-Z_];

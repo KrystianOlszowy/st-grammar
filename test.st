@@ -59,7 +59,12 @@
 
 // DATE AND TIME ///////////////
 //DATE_AND_TIME#1984-06-25-15:36:55.360227400 
-//LDT#1984-06-25-15:36:55.360_227_400
+/*TYPE data_i_godzina : 
+  STRUCT
+    dh : LDATE_AND_TIME := LDT#1984-06-25-15:36:55.360_227_400;
+  END_STRUCT
+END_TYPE
+*/
 
 // DIRECT VARIABLES /////////////////////////////////////////
 //%QX7.5 
@@ -122,7 +127,8 @@ END_TYPE*/
    flag1  AT %X3.0:  BOOL; 
    end  AT %B25:  BYTE; 
   END_STRUCT; 
-END_TYPE*/
+END_TYPE
+*/
 
 // STRUCT WITH PARTLY SPECIFIED ADDRESSES //////////////
 /*TYPE 
@@ -145,7 +151,7 @@ END_TYPE */
 
 // DATA TYPE INITIALIZATION WITH CONST EXPRESSION ///////////////
 /*TYPE 
-  PIx2: REAL:= 2 * 3.1416; 
+  crazyExpr: BOOL:= ((A + B * 2) > (C - D / 4)) AND (NOT (X OR Y)) OR (E MOD 3 = 0) AND (SHL(F, 1) < 256); 
 END_TYPE
 */
 
@@ -177,14 +183,15 @@ FUNCTION SPECIAL_FUN
 
   VAR 
     b : INT ; 
-    Sum : INT:= 0; 
+    Sum : INT:= 0 + 1; 
   END_VAR 
 
   FOR  i := FirstIndex TO LastIndex DO 
-    Sum:= Sum + DataArray[i]; 
+    Sum:= Sum + DataArray[i + 1]; 
   END_FOR 
 
 END_FUNCTION
+
 
 /////////////////////////////////////////////////////////
 // Polecenia do testowania tworzenia drzew składniowych:
