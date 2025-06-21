@@ -33,7 +33,7 @@ public partial class stLexer : Lexer {
 	protected static DFA[] decisionToDFA;
 	protected static PredictionContextCache sharedContextCache = new PredictionContextCache();
 	public const int
-		DIRECT_PART_ACCESS=1, DIRECT_VARIABLE=2, SINGLE_BYTE_STRING=3, DOUBLE_BYTE_STRING=4, 
+		RELATIVE_ADDRESS=1, DIRECT_VARIABLE=2, SINGLE_BYTE_STRING=3, DOUBLE_BYTE_STRING=4, 
 		DURATION=5, DATE_TIME_VALUE=6, DATE_VALUE=7, CLOCK_TIME=8, REAL_VALUE=9, 
 		SIGNED_INT=10, UNSIGNED_INT=11, BINARY_INT=12, OCTAL_INT=13, HEX_INT=14, 
 		BOOLEAN=15, USINT=16, UINT=17, UDINT=18, ULINT=19, SINT=20, INT=21, DINT=22, 
@@ -70,7 +70,7 @@ public partial class stLexer : Lexer {
 	};
 
 	public static readonly string[] ruleNames = {
-		"DIRECT_PART_ACCESS", "DIRECT_VARIABLE", "SINGLE_BYTE_STRING", "DOUBLE_BYTE_STRING", 
+		"RELATIVE_ADDRESS", "DIRECT_VARIABLE", "SINGLE_BYTE_STRING", "DOUBLE_BYTE_STRING", 
 		"DURATION", "DATE_TIME_VALUE", "DATE_VALUE", "CLOCK_TIME", "REAL_VALUE", 
 		"SIGNED_INT", "UNSIGNED_INT", "BINARY_INT", "OCTAL_INT", "HEX_INT", "BOOLEAN", 
 		"USINT", "UINT", "UDINT", "ULINT", "SINT", "INT", "DINT", "LINT", "REAL", 
@@ -135,7 +135,7 @@ public partial class stLexer : Lexer {
 		"'#'", "'^'", "'%'", "'_'"
 	};
 	private static readonly string[] _SymbolicNames = {
-		null, "DIRECT_PART_ACCESS", "DIRECT_VARIABLE", "SINGLE_BYTE_STRING", "DOUBLE_BYTE_STRING", 
+		null, "RELATIVE_ADDRESS", "DIRECT_VARIABLE", "SINGLE_BYTE_STRING", "DOUBLE_BYTE_STRING", 
 		"DURATION", "DATE_TIME_VALUE", "DATE_VALUE", "CLOCK_TIME", "REAL_VALUE", 
 		"SIGNED_INT", "UNSIGNED_INT", "BINARY_INT", "OCTAL_INT", "HEX_INT", "BOOLEAN", 
 		"USINT", "UINT", "UDINT", "ULINT", "SINT", "INT", "DINT", "LINT", "REAL", 
