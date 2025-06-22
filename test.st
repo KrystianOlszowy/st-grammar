@@ -1,78 +1,6 @@
 (*$DIR var*)
 { }
 
-////////////////////////////////
-/* /* Numeric and logic literals */ */
-////////////////////////////////
-
-// INT ////////////////////////
-//-17
-//INT#16#7FFF
-//0
-//-0
-
-// REAL ///////////////////////
-//REAL#-17.65e-34
-//0.0
-//0.4560
-
-// BOOL ///////////////////////
-//BOOL#0
-//BOOL#FALSE
-//BOOL#1
-//FALSE
-
-// MULTIBITS //////////////////
-//WORD#2#1111_0000
-//DWORD#16#FF07
-//LWORD#2654
-
-/////////////////////////////////
-/* Character string literals *///
-/////////////////////////////////
-
-//WCHAR#"" 
-//WSTRING#"Anatol $" i pies" 
-//STRING#'Anatol $' i pies'
-//"!#%& []';[]/%^&%!@#!@$L" 
-//" ' "
-//" " 
-//"$"" 
-//"$R$L$00C4"
-
-////////////////////////////////
-/* Date and time literals */////
-////////////////////////////////
-
-// DURATION/TIME ///////////////
-//TIME#50d_22h_30m_22s_300.3ms
-//LT#2h30m
-
-// TIME OF DAY /////////////////
-//TIME_OF_DAY#15:36:55.36_400
-//LTOD#15:36:55.36 
-//LTIME_OF_DAY#15:36:55.36
-
-// DATE //////////////////////////
-//DATE#2025-04-24
-//LD#2010-09-22
-
-// DATE AND TIME ///////////////
-//DATE_AND_TIME#1984-06-25-15:36:55.360227400 
-/*TYPE data_i_godzina : 
-  STRUCT
-    dh : LDATE_AND_TIME := LDT#1984-06-25-15:36:55.360_227_400;
-  END_STRUCT
-END_TYPE
-*/
-
-// DIRECT VARIABLES /////////////////////////////////////////
-//%QX7.5 
-//%MW0.7.9
-//%M*
-
-// USER DEFINED DATA TYPE 
-
 // ENUMARATION /////////////////////////////////////////////
 /*TYPE 
   ANALOG_SIGNAL_RANGE: 
@@ -87,8 +15,7 @@ END_TYPE
 */
 
 // Data type with named values ////////////////////////////////
-// DOESNT WORK NOW !!!!
-/*TYPE 
+TYPE 
  Colors: DWORD 
      (Red  := 16#00FF0000, 
       Green:= 16#0000FF00, 
@@ -96,7 +23,7 @@ END_TYPE
       White:= Red OR Green OR Blue, 
       Black:= Red AND Green AND Blue) 
       := Green; 
-END_TYPE */
+END_TYPE 
 
 // SUBRANGE DATA TYPE ///////////////////////////////////////
 /*TYPE 
@@ -169,6 +96,7 @@ END_TYPE
 END_VAR 
 */
 
+/* 
 FUNCTION SPECIAL_FUN   
   VAR_INPUT 
     FirstIndex: INT; 
@@ -191,7 +119,93 @@ FUNCTION SPECIAL_FUN
   END_FOR 
 
 END_FUNCTION
+*/
 
+/* 
+Class CCounter 
+  VAR 
+    m_iCurrentValue: INT;  (* Default = 0 *) 
+    m_bCountUp: BOOL:=TRUE; 
+  END_VAR 
+  VAR PUBLIC 
+    m_iUpperLimit: INT:=+10000; 
+    m_iLowerLimit: INT:=-10000; 
+  END_VAR 
+ 
+METHOD Count (* Only body *) 
+    IF (m_bCountUp AND m_iCurrentValue<m_iUpperLimit) THEN 
+        m_iCurrentValue:= m_iCurrentValue+1; 
+    END_IF; 
+    IF (NOT m_bCountUp AND m_iCurrentValue>m_iLowerLimit) THEN 
+        m_iCurrentValue:= m_iCurrentValue-1; 
+    END_IF; 
+END_METHOD 
+ 
+METHOD SetDirection 
+  VAR_INPUT 
+     bCountUp: BOOL; 
+  END_VAR 
+  m_bCountUp:=bCountUp; 
+END_METHOD 
+ 
+END_CLASS */
+
+/* 
+INTERFACE ROOM 
+   METHOD DAYTIME   END_METHOD  // Called during day-time 
+   METHOD NIGHTTIME END_METHOD  // Called during night-time 
+END_INTERFACE 
+ 
+FUNCTION_BLOCK ROOM_CTRL   // 
+  VAR_INPUT 
+    RM: ROOM;    // Interface ROOM as type of input variable 
+  END_VAR 
+  VAR_EXTERNAL 
+    Actual_TOD: TOD;   // Global time definition 
+  END_VAR 
+  IF (RM = NULL)    // Important: test valid reference! 
+  THEN RETURN; 
+  END_IF; 
+  IF Actual_TOD >= TOD#20:15 OR Actual_TOD <= TOD#6:00 
+  THEN RM.NIGHTTIME();   // call method of RM 
+  ELSE RM.DAYTIME();  
+  END_IF; 
+END_FUNCTION_BLOCK 
+*/
+
+/* 
+CLASS LIGHTROOM IMPLEMENTS ROOM 
+VAR LIGHT: BOOL; END_VAR 
+ 
+METHOD PUBLIC DAYTIME 
+  LIGHT:= FALSE; 
+END_METHOD 
+ 
+METHOD PUBLIC NIGHTTIME 
+  LIGHT:= TRUE; 
+END_METHOD 
+END_CLASS 
+ 
+FUNCTION_BLOCK ROOM_CTRL 
+  VAR_INPUT  
+ RM: ROOM;    // Interface ROOM as type of a variable 
+  END_VAR 
+ 
+  VAR_EXTERNAL 
+ Actual_TOD: TOD;   // Global time definition 
+  END_VAR 
+ 
+  IF (RM = NULL)    // Important: test valid reference! 
+  THEN RETURN; 
+  END_IF; 
+  IF Actual_TOD >= TOD#20:15 OR  
+ Actual_TOD <= TOD#06:00  
+  THEN RM.NIGHTTIME();   // Call method of RM (dynamic binding) to  
+      // either LIGHTROOM.NIGHTTIME 
+      // or LIGHT2ROOM.NIGHTTIME) 
+  ELSE RM.DAYTIME(); 
+  END_IF; 
+END_FUNCTION_BLOCK */
 
 /////////////////////////////////////////////////////////
 // Polecenia do testowania tworzenia drzew składniowych:

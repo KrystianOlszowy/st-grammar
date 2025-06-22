@@ -1,15 +1,29 @@
 grammar st;
 
-// TO DO: - pragma dla CPDEVa - linie 350-550 - mail do promotora z zapytaniem o konsultacje - lista
-// pytań odnośnie utworzonego drzewa - przykładowe programy do testowania - przygotowanie wniosku,
-// swój i promotora opis - jak się uda to plan pracy magisterskiej
+// Definicja kanałów channels { COMMENTS, PRAGMAS } może działać ale trzeba rozbić na gramatykę i
+// lexer
+
+// TO DO: przygotowanie wniosku, swój i promotora opis, jak się uda to plan pracy magisterskiej,
+
+/* Pytania
+ 1. Jak działąją dyrektywy COMMENT i reszta, chcę wrzucić VMASM w HIDDEN, AUTO READ i
+ WRITE chyba będą łatwe
+ 2. (*$COMMENT chcę deklarować jako 
+ 3. Może dołożyć konfigurację do
+ rozpoznawania, mały wysiłek a dodatkowe strony
+ 4. jak radzić sobie z +1, -1 gdy mam zdefiniowane
+ reguły dla lexera dla INTÓW
+ 
+ Podczas realizacji pracy magisterskiej napotkałem na nieprzewidziane
+ trudności które wymagają dodatkowego czasu do ich rozwiązania.
+ 
+ */
 
 // Parser //
 
 // Starting rule
 file:
-	/* configurationDeclaration
- |
+	/* configurationDeclaration |
 	 */
 	(
 		pouDeclaration
@@ -130,7 +144,7 @@ namespaceElements: (
 		| namespaceDeclaration
 	)+;
 
-namespaceAccess: namespaceName ( DOT namespaceName)*;
+namespaceAccess: namespaceName (DOT namespaceName)*;
 namespaceName: IDENTIFIER;
 
 usingDirective:
@@ -144,12 +158,13 @@ programDeclaration:
 		| normalVarDeclarations
 		| tempVarDeclarations
 		| otherVarDeclarations
-		| locVarDeclarations
+		| locatedVarDeclarations
 		/*| programAccessDeclarations*/
-	)* statementList END_PROGRAM;
+	)* programBody END_PROGRAM;
 
 programName: IDENTIFIER;
-programNameAccess: ( namespaceName DOT)* programName;
+programNameAccess: (namespaceName DOT)* programName;
+programBody: statementList;
 
 /*programAccessDeclarations:
  VAR_ACCESS (programAccessDeclaration SEMICOLON)* END_VAR;
@@ -186,10 +201,11 @@ elementaryTypeName:
 	| multibitsTypeName
 	| stringTypeName
 	| dateTypeName
+	| timeOfDayTypeName
 	| dateAndTimeTypeName
 	| durationTypeName;
 
-simpleTypeAccess: ( namespaceName DOT)* simpleTypeName;
+simpleTypeAccess: (namespaceName DOT)* simpleTypeName;
 
 stringTypeName: (STRING | WSTRING) (
 		LEFT_BRACKET stringSize RIGHT_BRACKET
@@ -249,7 +265,7 @@ arraySpecificationInit: arraySpecification (ASSIGN arrayInit)?;
 arraySpecification:
 	arrayTypeAccess
 	| ARRAY LEFT_BRACKET subrange (COMMA subrange)* RIGHT_BRACKET OF dataTypeAccess;
-arrayTypeAccess: ( namespaceName DOT)* arrayTypeName;
+arrayTypeAccess: (namespaceName DOT)* arrayTypeName;
 
 arrayInit:
 	LEFT_BRACKET arrayElementInit (COMMA arrayElementInit)* RIGHT_BRACKET;
@@ -379,7 +395,7 @@ functionBlockVarSpecificationInit:
 
 // Method declaration
 methodDeclaration:
-	METHOD accessSpecification (FINAL | ABSTRACT)? OVERRIDE? methodName (
+	METHOD accessSpecification? (FINAL | ABSTRACT)? OVERRIDE? methodName (
 		COLON dataTypeAccess
 	)? (
 		ioVarDeclarations
@@ -432,18 +448,21 @@ inputVarDeclarations:
 	)* END_VAR;
 inputVarDeclaration:
 	varDeclarationInit
+	| edgeDeclaration
 	| arrayConformDeclaration;
+
+edgeDeclaration: variableList COLON BOOL (R_EDGE | F_EDGE);
 
 varDeclarationInit:
 	variableList COLON (
 		simpleSpecificationInit
-		| strVarDeclaration
+		| stringVarDeclarationInit
 		| referenceSpecificationInit
 	)
 	| arrayVarDeclarationInit
 	| structVarDeclarationInit
 	| functionBlockVarDeclarationInit
-	| interfaceSpecificationInit;
+	| interfaceVarDeclarationInit;
 
 variableList: variableName (COMMA variableName)*;
 
@@ -469,27 +488,42 @@ normalVarDeclarations:
 		varDeclarationInit SEMICOLON
 	)* END_VAR;
 
-
+// Other normal variables delaration
 otherVarDeclarations:
 	retainVarDeclarations
 	| nonRetainVarDeclarations
-	| locPartlyVarDeclaration;
+	| locatedPartlyVarDeclaration;
 
 nonRetainVarDeclarations:
 	VAR NON_RETAIN accessSpecification? (
 		varDeclarationInit SEMICOLON
 	)* END_VAR;
 retainVarDeclarations:
-	VAR RETAIN accessSpecification? (varDeclarationInit ';')* END_VAR;
+	VAR RETAIN accessSpecification? (
+		varDeclarationInit SEMICOLON
+	)* END_VAR;
 
-locVarDeclarations:
-	VAR (CONSTANT | RETAIN | NON_RETAIN)? (locVarDeclaration ';')* END_VAR;
-locVarDeclaration:
-	variableName? locatedAt ':' locVarSpecificationInit;
+locatedPartlyVarDeclaration:
+	VAR (RETAIN | NON_RETAIN)? locatedPartlyVar* END_VAR;
+locatedPartlyVar:
+	variableName AT RELATIVE_ADDRESS COLON varSpecification SEMICOLON;
+varSpecification:
+	simpleSpecification
+	| arraySpecification
+	| structTypeAccess
+	| stringSpecification;
+
+// Fully located variable declaration
+locatedVarDeclarations:
+	VAR (CONSTANT | RETAIN | NON_RETAIN)? (
+		locatedVarDeclaration SEMICOLON
+	)* END_VAR;
+locatedVarDeclaration:
+	variableName? locatedAt COLON locatedVarSpecificationInit;
 
 // Temporary variables declaration
 tempVarDeclarations:
-	VAR_TEMP (( varDeclarationInit) SEMICOLON)* END_VAR;
+	VAR_TEMP ((varDeclarationInit) SEMICOLON)* END_VAR;
 
 // External variables declaration
 externalVarDeclarations:
@@ -503,7 +537,7 @@ externalDeclaration:
 		| referenceTypeAccess
 	);
 
-// global variables [!!!]
+// Global variables
 globalVarName: IDENTIFIER;
 globalVarDeclarations:
 	VAR_GLOBAL (CONSTANT | RETAIN)? (
@@ -511,7 +545,7 @@ globalVarDeclarations:
 	)* END_VAR;
 globalVarDeclaration:
 	globalVarSpecification COLON (
-		locVarSpecificationInit
+		locatedVarSpecificationInit
 		| functionBlockTypeAccess
 	);
 
@@ -519,30 +553,19 @@ globalVarSpecification:
 	globalVarName (COMMA globalVarName)*
 	| globalVarName locatedAt;
 
-locVarSpecificationInit:
+locatedVarSpecificationInit:
 	simpleSpecificationInit
 	| arraySpecificationInit
 	| structSpecificationInit
-	| sByteStrSpecification
-	| dByteStrSpecification;
+	| stringSpecificationInit;
 
-strVarDeclaration: sByteStrVarDecl | dByteStrVarDeclaration;
-sByteStrVarDecl: variableList ':' sByteStrSpecification;
-sByteStrSpecification:
-	STRING ('[' UNSIGNED_INT ']')? (':=' SINGLE_BYTE_STRING)?;
-dByteStrVarDeclaration: variableList ':' dByteStrSpecification;
-dByteStrSpecification:
-	WSTRING ('[' UNSIGNED_INT ']')? (':=' DOUBLE_BYTE_STRING)?;
-
-locPartlyVarDeclaration:
-	VAR (RETAIN | NON_RETAIN)? locPartlyVar* END_VAR;
-locPartlyVar:
-	variableName AT RELATIVE_ADDRESS ':' varSpecification ';';
-varSpecification:
-	simpleSpecification
-	| arraySpecification
-	| structTypeAccess
-	| ( STRING | WSTRING) ( '[' UNSIGNED_INT ']')?;
+stringVarDeclarationInit:
+	variableList COLON stringSpecificationInit;
+stringSpecificationInit: stringSpecification stringInit?;
+stringSpecification: (STRING | WSTRING) (
+		LEFT_BRACKET stringSize RIGHT_BRACKET
+	)?;
+stringInit: SINGLE_BYTE_STRING | DOUBLE_BYTE_STRING;
 
 // Funtions
 functionDeclaration:
@@ -565,10 +588,10 @@ classDeclaration:
 		| otherVarDeclarations
 	)* (methodDeclaration)* END_CLASS;
 classTypeName: IDENTIFIER;
-classTypeAccess: ( namespaceName DOT)* classTypeName;
+classTypeAccess: (namespaceName DOT)* classTypeName;
 
 className: IDENTIFIER;
-classInstanceName: ( namespaceName DOT)* className CARET*;
+classInstanceName: (namespaceName DOT)* className CARET*;
 
 accessSpecification: PUBLIC | PROTECTED | PRIVATE | INTERNAL;
 
@@ -585,8 +608,11 @@ interfaceTypeAccess: (namespaceName DOT)* interfaceName;
 
 methodPrototype:
 	METHOD methodName (COLON dataTypeAccess)? ioVarDeclarations* END_METHOD;
+
+interfaceVarDeclarationInit:
+	variableList COLON interfaceSpecificationInit;
 interfaceSpecificationInit:
-	variableList (ASSIGN interfaceValue)?;
+	interfaceTypeAccess (ASSIGN interfaceValue)?;
 interfaceValue:
 	symbolicVariable
 	| functionBlockInstanceName
@@ -613,9 +639,9 @@ assignmentAttempt: (referenceName | dereference) ATTEMPT_ASSIGN (
 
 subprogControlStatement:
 	functionCall
-	| invocation
-	| SUPER LEFT_PAREN RIGHT_PAREN
-	| RETURN;
+	| invocationStatement
+	| superCallStatement
+	| returnStatement;
 
 functionCall:
 	functionAccess LEFT_BRACKET (
@@ -625,7 +651,7 @@ functionCall:
 functionAccess: (namespaceName DOT)* functionName;
 functionName: IDENTIFIER;
 
-invocation: (
+invocationStatement: (
 		functionBlockInstanceName
 		| (THIS DOT)? (
 			((functionBlockInstanceName | classInstanceName) DOT)+
@@ -635,6 +661,9 @@ invocation: (
 parameterAssign: ((variableName ASSIGN)? expression)
 	| referenceAssign
 	| (NOT? variableName ASSIGN_OUT variable);
+
+superCallStatement: SUPER LEFT_PAREN RIGHT_PAREN;
+returnStatement: RETURN;
 
 // Selection statements
 selectionStatement: ifStatement | caseStatement;
@@ -679,7 +708,7 @@ expression:
 	| LEFT_PAREN expression RIGHT_PAREN							# bracketedExpression
 	| functionCall												# funcCallExpression
 	| dereference												# derefExpression
-	| ( PLUS | MINUS | NOT) expression							# unaryExpression
+	| (PLUS | MINUS | NOT) expression							# unaryExpression
 	| <assoc = right> expression POWER expression				# exponentExpression
 	| expression (ASTERISK | SLASH | MOD) expression			# multDivModExpression
 	| expression (PLUS | MINUS) expression						# addSubExpression
@@ -806,7 +835,9 @@ DATE_TIME_VALUE: DATE_VALUE '-' CLOCK_TIME;
 DATE_VALUE:
 	DIGIT DIGIT DIGIT DIGIT '-' DIGIT DIGIT '-' DIGIT DIGIT;
 CLOCK_TIME:
-	DIGIT DIGIT ':' DIGIT DIGIT ':' UNSIGNED_INT '.' UNSIGNED_INT;
+	DIGIT DIGIT? ':' DIGIT DIGIT (
+		':' UNSIGNED_INT ('.' UNSIGNED_INT)?
+	)?;
 
 // Numeric and boolean literal values
 REAL_VALUE: ('+' | '-')? UNSIGNED_INT '.' UNSIGNED_INT (
@@ -882,8 +913,9 @@ REF: 'REF';
 NULL: 'NULL';
 
 // Main variable declarations keywords
-THIS: 'THIS';
 VAR_INPUT: 'VAR_INPUT';
+R_EDGE: 'R_EDGE';
+F_EDGE: 'F_EDGE';
 VAR_OUTPUT: 'VAR_OUTPUT';
 VAR_IN_OUT: 'VAR_IN_OUT';
 RETAIN: 'RETAIN';
@@ -907,6 +939,7 @@ EXTENDS: 'EXTENDS';
 IMPLEMENTS: 'IMPLEMENTS';
 END_FUNCTION_BLOCK: 'END_FUNCTION_BLOCK';
 METHOD: 'METHOD';
+THIS: 'THIS';
 OVERRIDE: 'OVERRIDE';
 END_METHOD: 'END_METHOD';
 CLASS: 'CLASS';
@@ -1062,6 +1095,11 @@ fragment DURATION_UNIT:
 
 // General identifier rule
 IDENTIFIER: NON_DIGIT (NON_DIGIT | DIGIT)*;
+
+// CPDev directives
+AUTO_DIRECTIVE: '(*$AUTO*)';
+READ_DIRECTIVE: '(*$READ*)';
+WRITE_DIRECTIVE: '(*$WRITE*)';
 
 // Pragmas, placement is important 
 PRAGMA: '{' .*? '}' -> channel(HIDDEN);

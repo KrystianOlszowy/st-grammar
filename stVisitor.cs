@@ -92,6 +92,12 @@ public interface IstVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitProgramNameAccess([NotNull] stParser.ProgramNameAccessContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.programBody"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitProgramBody([NotNull] stParser.ProgramBodyContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="stParser.dataTypeDeclaration"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -656,6 +662,12 @@ public interface IstVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitInputVarDeclaration([NotNull] stParser.InputVarDeclarationContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.edgeDeclaration"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitEdgeDeclaration([NotNull] stParser.EdgeDeclarationContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="stParser.varDeclarationInit"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -716,17 +728,35 @@ public interface IstVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitRetainVarDeclarations([NotNull] stParser.RetainVarDeclarationsContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="stParser.locVarDeclarations"/>.
+	/// Visit a parse tree produced by <see cref="stParser.locatedPartlyVarDeclaration"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitLocVarDeclarations([NotNull] stParser.LocVarDeclarationsContext context);
+	Result VisitLocatedPartlyVarDeclaration([NotNull] stParser.LocatedPartlyVarDeclarationContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="stParser.locVarDeclaration"/>.
+	/// Visit a parse tree produced by <see cref="stParser.locatedPartlyVar"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitLocVarDeclaration([NotNull] stParser.LocVarDeclarationContext context);
+	Result VisitLocatedPartlyVar([NotNull] stParser.LocatedPartlyVarContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.varSpecification"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitVarSpecification([NotNull] stParser.VarSpecificationContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.locatedVarDeclarations"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitLocatedVarDeclarations([NotNull] stParser.LocatedVarDeclarationsContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.locatedVarDeclaration"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitLocatedVarDeclaration([NotNull] stParser.LocatedVarDeclarationContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="stParser.tempVarDeclarations"/>.
 	/// </summary>
@@ -770,59 +800,35 @@ public interface IstVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitGlobalVarSpecification([NotNull] stParser.GlobalVarSpecificationContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="stParser.locVarSpecificationInit"/>.
+	/// Visit a parse tree produced by <see cref="stParser.locatedVarSpecificationInit"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitLocVarSpecificationInit([NotNull] stParser.LocVarSpecificationInitContext context);
+	Result VisitLocatedVarSpecificationInit([NotNull] stParser.LocatedVarSpecificationInitContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="stParser.strVarDeclaration"/>.
+	/// Visit a parse tree produced by <see cref="stParser.stringVarDeclarationInit"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitStrVarDeclaration([NotNull] stParser.StrVarDeclarationContext context);
+	Result VisitStringVarDeclarationInit([NotNull] stParser.StringVarDeclarationInitContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="stParser.sByteStrVarDecl"/>.
+	/// Visit a parse tree produced by <see cref="stParser.stringSpecificationInit"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitSByteStrVarDecl([NotNull] stParser.SByteStrVarDeclContext context);
+	Result VisitStringSpecificationInit([NotNull] stParser.StringSpecificationInitContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="stParser.sByteStrSpecification"/>.
+	/// Visit a parse tree produced by <see cref="stParser.stringSpecification"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitSByteStrSpecification([NotNull] stParser.SByteStrSpecificationContext context);
+	Result VisitStringSpecification([NotNull] stParser.StringSpecificationContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="stParser.dByteStrVarDeclaration"/>.
+	/// Visit a parse tree produced by <see cref="stParser.stringInit"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitDByteStrVarDeclaration([NotNull] stParser.DByteStrVarDeclarationContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="stParser.dByteStrSpecification"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitDByteStrSpecification([NotNull] stParser.DByteStrSpecificationContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="stParser.locPartlyVarDeclaration"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitLocPartlyVarDeclaration([NotNull] stParser.LocPartlyVarDeclarationContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="stParser.locPartlyVar"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitLocPartlyVar([NotNull] stParser.LocPartlyVarContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="stParser.varSpecification"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitVarSpecification([NotNull] stParser.VarSpecificationContext context);
+	Result VisitStringInit([NotNull] stParser.StringInitContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="stParser.functionDeclaration"/>.
 	/// </summary>
@@ -902,6 +908,12 @@ public interface IstVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitMethodPrototype([NotNull] stParser.MethodPrototypeContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.interfaceVarDeclarationInit"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitInterfaceVarDeclarationInit([NotNull] stParser.InterfaceVarDeclarationInitContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="stParser.interfaceSpecificationInit"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -962,17 +974,29 @@ public interface IstVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitFunctionName([NotNull] stParser.FunctionNameContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="stParser.invocation"/>.
+	/// Visit a parse tree produced by <see cref="stParser.invocationStatement"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitInvocation([NotNull] stParser.InvocationContext context);
+	Result VisitInvocationStatement([NotNull] stParser.InvocationStatementContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="stParser.parameterAssign"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitParameterAssign([NotNull] stParser.ParameterAssignContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.superCallStatement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSuperCallStatement([NotNull] stParser.SuperCallStatementContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.returnStatement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitReturnStatement([NotNull] stParser.ReturnStatementContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="stParser.selectionStatement"/>.
 	/// </summary>
