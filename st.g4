@@ -1,6 +1,8 @@
 grammar st;
 
-// TO DO:
+// TO DO: - pragma dla CPDEVa - linie 350-550 - mail do promotora z zapytaniem o konsultacje - lista
+// pytań odnośnie utworzonego drzewa - przykładowe programy do testowania - przygotowanie wniosku,
+// swój i promotora opis - jak się uda to plan pracy magisterskiej
 
 // Parser //
 
@@ -43,10 +45,12 @@ file:
  accessPath: (resourceName '.')?
  directVariable
  | (resourceName '.')? (programName '.')? (
- ( fbInstanceName | classInstanceName)
+ ( functionBlockInstanceName |
+ classInstanceName)
  '.'
  )* symbolicVariable;
- globalVarAccess: (resourceName '.')? globalVarName (
+ globalVarAccess: (resourceName '.')? globalVarName
+ (
  '.'
  structElementName
  )?;
@@ -74,11 +78,13 @@ file:
  )?;
  programConfigurationElements:
  programConfigurationElement (',' programConfigurationElement)*;
- programConfigurationElement: fbTask | programCnxn;
- fbTask: fbInstanceName WITH taskName;
+ programConfigurationElement: functionBlockTask | programCnxn;
+ functionBlockTask:
+ functionBlockInstanceName WITH taskName;
  programCnxn:
  symbolicVariable ':=' programDataSource
- | symbolicVariable '=>' dataSink;
+ |
+ symbolicVariable '=>' dataSink;
  programDataSource:
  literalValue
  | enumValue
@@ -86,15 +92,18 @@ file:
  | directVariable;
  dataSink:
  globalVarAccess | directVariable;
- configInit: VAR_CONFIG ( configInstInit ';')* END_VAR;
+ configInit: VAR_CONFIG (
+ configInstInit ';')* END_VAR;
  configInstInit:
  resourceName '.' programName '.' (
- ( fbInstanceName | classInstanceName) '.'
+ (
+ functionBlockInstanceName | classInstanceName) '.'
  )*
  (
- variableName locatedAt? ':' locVarSpecInit
+ variableName locatedAt? ':'
+ locVarSpecInit
  | (
- ( fbInstanceName ':' fbTypeAccess)
+ ( functionBlockInstanceName ':' functionBlockTypeAccess)
  | (
  classInstanceName ':' classTypeAccess)
  ) ':=' structInit
@@ -105,7 +114,7 @@ file:
 pouDeclaration:
 	usingDirective* (
 		functionDeclaration
-		| fbDeclaration
+		| functionBlockDeclaration
 		| programDeclaration
 	);
 
@@ -115,7 +124,7 @@ namespaceDeclaration:
 namespaceElements: (
 		dataTypeDeclaration
 		| functionDeclaration
-		| fbDeclaration
+		| functionBlockDeclaration
 		| classDeclaration
 		| interfaceDeclaration
 		| namespaceDeclaration
@@ -131,7 +140,8 @@ usingDirective:
 programDeclaration:
 	PROGRAM programName (
 		ioVarDeclarations
-		| functionVarDeclarations
+		| externalVarDeclarations
+		| normalVarDeclarations
 		| tempVarDeclarations
 		| otherVarDeclarations
 		| locVarDeclarations
@@ -149,7 +159,7 @@ programNameAccess: ( namespaceName DOT)* programName;
  */
 
 // User defined data type declaraction
-dataTypeDeclaration: TYPE ( typeDeclaration SEMICOLON)+ END_TYPE;
+dataTypeDeclaration: TYPE (typeDeclaration SEMICOLON)+ END_TYPE;
 typeDeclaration:
 	simpleTypeDeclaration
 	| subrangeTypeDeclaration
@@ -165,7 +175,8 @@ simpleTypeDeclaration:
 simpleTypeName: IDENTIFIER;
 
 simpleSpecificationInit:
-	simpleSpecification (ASSIGN expression)?;
+	simpleSpecification (ASSIGN simpleInit)?;
+simpleInit: expression;
 simpleSpecification: elementaryTypeName | simpleTypeAccess;
 
 elementaryTypeName:
@@ -193,12 +204,12 @@ subrangeTypeDeclaration:
 
 subrangeTypeName: IDENTIFIER;
 subrangeSpecificationInit:
-	subrangeSpecification (ASSIGN subrangeValue)?;
-
-subrangeValue: SIGNED_INT | UNSIGNED_INT;
+	subrangeSpecification (ASSIGN subrangeInit)?;
 subrangeSpecification:
 	intTypeName LEFT_PAREN subrange RIGHT_PAREN
 	| subrangeTypeAccess;
+subrangeInit: SIGNED_INT | UNSIGNED_INT;
+
 subrangeTypeAccess: (namespaceName DOT)* subrangeTypeName;
 subrange: subrangeBegin RANGE subrangeEnd;
 subrangeBegin: expression;
@@ -213,11 +224,11 @@ enumTypeDeclaration:
 
 enumTypeName: IDENTIFIER;
 enumNamedSpecificationInit:
-	LEFT_PAREN enumValueSpecification (
-		COMMA enumValueSpecification
+	LEFT_PAREN enumElementSpecificationInit (
+		COMMA enumElementSpecificationInit
 	)* RIGHT_PAREN (ASSIGN enumValue)?;
 
-enumValueSpecification:
+enumElementSpecificationInit:
 	enumElementName (ASSIGN enumElementValue)?;
 enumElementName: IDENTIFIER;
 enumElementValue: intLiteral | expression;
@@ -252,11 +263,21 @@ arrayElementInitValue:
 	| structInit
 	| arrayInit;
 
+// variable length Array IO declaration
+arrayConformDeclaration: variableList COLON arrayConformand;
+arrayConformand:
+	ARRAY LEFT_BRACKET ASTERISK (COMMA ASTERISK)* RIGHT_BRACKET OF dataTypeAccess;
+
+// array type variable declaration
+arrayVarDeclarationInit:
+	variableList COLON arraySpecificationInit;
+
 // Struct type declaration 
-structTypeDeclaration: structTypeName COLON structSpecification;
+structTypeDeclaration:
+	structTypeName COLON structTypeSpecification;
 structTypeName: IDENTIFIER;
 
-structSpecification:
+structTypeSpecification:
 	structDeclaration
 	| structSpecificationInit;
 
@@ -278,8 +299,10 @@ relativeAddress: RELATIVE_ADDRESS;
 partlySpecifiedAddress: DIRECT_VARIABLE;
 multibitPartAccess: DOT (UNSIGNED_INT | RELATIVE_ADDRESS);
 
-structSpecificationInit: structTypeAccess (ASSIGN structInit)?;
-structTypeAccess: ( namespaceName DOT)* structTypeName;
+structSpecificationInit:
+	structSpecification (ASSIGN structInit)?;
+structSpecification: structTypeAccess;
+structTypeAccess: (namespaceName DOT)* structTypeName;
 structInit:
 	LEFT_PAREN structElementInit (COMMA structElementInit)* RIGHT_PAREN;
 structElementInit:
@@ -290,6 +313,9 @@ structElementInit:
 		| structInit
 		| referenceValue
 	);
+// struct type variable declaration
+structVarDeclarationInit:
+	variableList COLON structSpecificationInit;
 
 // String type declaration 
 stringTypeDeclaration:
@@ -312,7 +338,7 @@ referenceValue: referenceAddress | NULL;
 referenceAddress:
 	REF LEFT_PAREN (
 		symbolicVariable
-		| fbInstanceName
+		| functionBlockInstanceName
 		| classInstanceName
 	) RIGHT_PAREN;
 
@@ -327,45 +353,38 @@ referenceAssign:
 referenceName: IDENTIFIER;
 dereference: referenceName CARET+;
 
-// function blocks [!!!]
-fbTypeName: IDENTIFIER;
-fbTypeAccess: ( namespaceName '.')* fbTypeName;
-fbDeclaration:
-	FUNCTION_BLOCK (FINAL | ABSTRACT)? fbName usingDirective* (
-		EXTENDS (fbTypeAccess | classTypeAccess)
+// Funtion Block type declaration
+functionBlockDeclaration:
+	FUNCTION_BLOCK (FINAL | ABSTRACT)? functionBlockName usingDirective* (
+		EXTENDS (functionBlockTypeAccess | classTypeAccess)
 	)? (IMPLEMENTS interfaceTypeList)? (
-		fbIOVarDeclarations
-		| functionVarDeclarations
+		ioVarDeclarations
+		| externalVarDeclarations
+		| normalVarDeclarations
 		| tempVarDeclarations
 		| otherVarDeclarations
-	)* (methodDeclaration)* fbBody END_FUNCTION_BLOCK;
-fbIOVarDeclarations:
-	fbInputDeclarations
-	| fbOutputDeclarations
-	| inOutDeclarations;
-fbInputDeclarations:
-	VAR_INPUT (RETAIN | NON_RETAIN)? (fbInputDeclaration ';')* END_VAR;
-fbInputDeclaration:
-	varDeclarationInit
-	| arrayConformDeclaration;
-fbOutputDeclarations:
-	VAR_OUTPUT (RETAIN | NON_RETAIN)? (fbOutputDeclaration ';')* END_VAR;
-fbOutputDeclaration:
-	varDeclarationInit
-	| arrayConformDeclaration;
-otherVarDeclarations:
-	retainVarDeclarations
-	| nonRetainVarDeclarations
-	| locPartlyVarDeclaration;
-nonRetainVarDeclarations:
-	VAR NON_RETAIN accessSpecification? (varDeclarationInit ';')* END_VAR;
-fbBody: statementList;
+	)* (methodDeclaration)* functionBlockBody END_FUNCTION_BLOCK;
+
+functionBlockName: IDENTIFIER;
+functionBlockInstanceName: (namespaceName COMMA)* functionBlockName CARET*;
+
+functionBlockTypeAccess: (namespaceName COMMA)* functionBlockTypeName;
+functionBlockTypeName: IDENTIFIER;
+functionBlockBody: statementList;
+
+functionBlockVarDeclarationInit:
+	variableList COLON functionBlockVarSpecificationInit;
+functionBlockVarSpecificationInit:
+	functionBlockTypeAccess (ASSIGN structInit)?;
+
+// Method declaration
 methodDeclaration:
 	METHOD accessSpecification (FINAL | ABSTRACT)? OVERRIDE? methodName (
-		':' dataTypeAccess
+		COLON dataTypeAccess
 	)? (
 		ioVarDeclarations
-		| functionVarDeclarations
+		| externalVarDeclarations
+		| normalVarDeclarations
 		| tempVarDeclarations
 	)* functionBody END_METHOD;
 methodName: IDENTIFIER;
@@ -384,83 +403,82 @@ derivedTypeAccess:
 	| referenceTypeAccess
 	| interfaceTypeAccess;
 
-// Variable declarations [!!!]
+// Variable access
 variable: directVariable | symbolicVariable;
-symbolicVariable: (( THIS '.') | ( namespaceName '.')+)? (
-		varAccess
-		| multiElementVar
+symbolicVariable: (( THIS COMMA) | ( namespaceName COMMA)+)? (
+		variableAccess
+		| multiElementVariable
 	);
-varAccess: varName | dereference;
-varName: IDENTIFIER;
-multiElementVar: varAccess (subscriptList | structVariable)+;
-subscriptList: '[' subscript ( ',' subscript)* ']';
-subscript: expression;
-structVariable: '.' structElementSelect;
-structElementSelect: varAccess;
+variableAccess: variableName | dereference;
+variableName: IDENTIFIER;
 
-// input variable declarations [!!!]
-inputDeclarations:
-	VAR_INPUT (RETAIN | NON_RETAIN)? (inputDeclaration ';')* END_VAR;
-inputDeclaration: varDeclarationInit | arrayConformDeclaration;
+multiElementVariable:
+	variableAccess (subscriptList | structElementSelect)+;
+subscriptList:
+	LEFT_BRACKET subscript (COMMA subscript)* RIGHT_BRACKET;
+subscript: expression;
+structElementSelect: COMMA structElementVariable;
+structElementVariable: variableAccess;
+
+// Input variable declarations [!!!]
+ioVarDeclarations:
+	inputVarDeclarations
+	| outputVarDeclarations
+	| inOutVarDeclarations;
+
+inputVarDeclarations:
+	VAR_INPUT (RETAIN | NON_RETAIN)? (
+		inputVarDeclaration SEMICOLON
+	)* END_VAR;
+inputVarDeclaration:
+	varDeclarationInit
+	| arrayConformDeclaration;
 
 varDeclarationInit:
-	variableList ':' (
+	variableList COLON (
 		simpleSpecificationInit
 		| strVarDeclaration
 		| referenceSpecificationInit
 	)
 	| arrayVarDeclarationInit
 	| structVarDeclarationInit
-	| fbDeclarationInit
+	| functionBlockVarDeclarationInit
 	| interfaceSpecificationInit;
 
-referenceVarDeclaration:
-	variableList ':' referenceSpecification;
+variableList: variableName (COMMA variableName)*;
 
-interfaceVarDeclaration: variableList ':' interfaceTypeAccess;
-variableList: variableName ( ',' variableName)*;
-variableName: IDENTIFIER;
+// Output variables declaration
+outputVarDeclarations:
+	VAR_OUTPUT (RETAIN | NON_RETAIN)? (
+		outputVarDeclaration SEMICOLON
+	)* END_VAR;
+outputVarDeclaration:
+	varDeclarationInit
+	| arrayConformDeclaration;
 
-arrayVarDeclarationInit:
-	variableList ':' arraySpecificationInit;
-arrayConformand: ARRAY '[' '*' ( ',' '*')* ']' OF dataTypeAccess;
-arrayConformDeclaration: variableList ':' arrayConformand;
-
-structVarDeclarationInit:
-	variableList ':' structSpecificationInit;
-
-fbDeclarationNoInit: fbName ( ',' fbName)* ':' fbTypeAccess;
-fbDeclarationInit: fbDeclarationNoInit ( ':=' structInit)?;
-fbName: IDENTIFIER;
-fbInstanceName: ( namespaceName '.')* fbName '^'*;
-
-// output declarations [!!!]
-outputDeclarations:
-	VAR_OUTPUT (RETAIN | NON_RETAIN)? (outputDeclaration ';')* END_VAR;
-outputDeclaration: varDeclarationInit | arrayConformDeclaration;
-inOutDeclarations:
-	VAR_IN_OUT (inOutVarDeclaration ';')* END_VAR;
+// InOut variables declaration
+inOutVarDeclarations:
+	VAR_IN_OUT (inOutVarDeclaration SEMICOLON)* END_VAR;
 inOutVarDeclaration:
-	varDeclaration
-	| arrayConformDeclaration
-	| fbDeclarationNoInit;
+	varDeclarationInit
+	| arrayConformDeclaration;
 
-// normal variable declaration [!!!]
-varDeclaration:
-	variableList ':' (
-		simpleSpecification
-		| strVarDeclaration
-		| arrayVarDeclaration
-		| structVarDeclaration
-	);
+// Normal variables declaration
+normalVarDeclarations:
+	VAR CONSTANT? accessSpecification? (
+		varDeclarationInit SEMICOLON
+	)* END_VAR;
 
-arrayVarDeclaration: variableList ':' arraySpecification;
 
-structVarDeclaration: variableList ':' structTypeAccess;
+otherVarDeclarations:
+	retainVarDeclarations
+	| nonRetainVarDeclarations
+	| locPartlyVarDeclaration;
 
-varDeclarations:
-	VAR CONSTANT? accessSpecification? (varDeclarationInit ';')* END_VAR;
-
+nonRetainVarDeclarations:
+	VAR NON_RETAIN accessSpecification? (
+		varDeclarationInit SEMICOLON
+	)* END_VAR;
 retainVarDeclarations:
 	VAR RETAIN accessSpecification? (varDeclarationInit ';')* END_VAR;
 
@@ -469,23 +487,19 @@ locVarDeclarations:
 locVarDeclaration:
 	variableName? locatedAt ':' locVarSpecificationInit;
 
+// Temporary variables declaration
 tempVarDeclarations:
-	VAR_TEMP (
-		(
-			varDeclaration
-			| referenceVarDeclaration
-			| interfaceVarDeclaration
-		) ';'
-	)* END_VAR;
+	VAR_TEMP (( varDeclarationInit) SEMICOLON)* END_VAR;
 
+// External variables declaration
 externalVarDeclarations:
-	VAR_EXTERNAL CONSTANT? (externalDeclaration ';')* END_VAR;
+	VAR_EXTERNAL CONSTANT? (externalDeclaration SEMICOLON)* END_VAR;
 externalDeclaration:
-	globalVarName ':' (
+	globalVarName COLON (
 		simpleSpecification
 		| arraySpecification
 		| structTypeAccess
-		| fbTypeAccess
+		| functionBlockTypeAccess
 		| referenceTypeAccess
 	);
 
@@ -498,11 +512,13 @@ globalVarDeclarations:
 globalVarDeclaration:
 	globalVarSpecification COLON (
 		locVarSpecificationInit
-		| fbTypeAccess
+		| functionBlockTypeAccess
 	);
+
 globalVarSpecification:
 	globalVarName (COMMA globalVarName)*
 	| globalVarName locatedAt;
+
 locVarSpecificationInit:
 	simpleSpecificationInit
 	| arraySpecificationInit
@@ -517,6 +533,7 @@ sByteStrSpecification:
 dByteStrVarDeclaration: variableList ':' dByteStrSpecification;
 dByteStrSpecification:
 	WSTRING ('[' UNSIGNED_INT ']')? (':=' DOUBLE_BYTE_STRING)?;
+
 locPartlyVarDeclaration:
 	VAR (RETAIN | NON_RETAIN)? locPartlyVar* END_VAR;
 locPartlyVar:
@@ -531,18 +548,10 @@ varSpecification:
 functionDeclaration:
 	FUNCTION functionName (COLON dataTypeAccess)? usingDirective* (
 		ioVarDeclarations
-		| functionVarDeclarations
+		| externalVarDeclarations
+		| normalVarDeclarations
 		| tempVarDeclarations
 	)* functionBody END_FUNCTION;
-
-ioVarDeclarations:
-	inputDeclarations
-	| outputDeclarations
-	| inOutDeclarations;
-
-functionVarDeclarations:
-	externalVarDeclarations
-	| varDeclarations;
 
 functionBody: statementList;
 
@@ -551,7 +560,8 @@ classDeclaration:
 	CLASS (FINAL | ABSTRACT)? classTypeName usingDirective* (
 		EXTENDS classTypeAccess
 	)? (IMPLEMENTS interfaceTypeList)? (
-		functionVarDeclarations
+		externalVarDeclarations
+		| normalVarDeclarations
 		| otherVarDeclarations
 	)* (methodDeclaration)* END_CLASS;
 classTypeName: IDENTIFIER;
@@ -579,7 +589,7 @@ interfaceSpecificationInit:
 	variableList (ASSIGN interfaceValue)?;
 interfaceValue:
 	symbolicVariable
-	| fbInstanceName
+	| functionBlockInstanceName
 	| classInstanceName
 	| NULL;
 
@@ -616,9 +626,9 @@ functionAccess: (namespaceName DOT)* functionName;
 functionName: IDENTIFIER;
 
 invocation: (
-		fbInstanceName
+		functionBlockInstanceName
 		| (THIS DOT)? (
-			((fbInstanceName | classInstanceName) DOT)+
+			((functionBlockInstanceName | classInstanceName) DOT)+
 		) methodName
 	) LEFT_PAREN (parameterAssign (COMMA parameterAssign)*)? RIGHT_PAREN;
 
@@ -665,14 +675,14 @@ repeatStatement:
 
 // Expressions 
 expression:
-	(literalValue | variableAccess | enumValue | referenceValue)	# primaryExpression
-	| LEFT_PAREN expression RIGHT_PAREN								# bracketedExpression
-	| functionCall													# funcCallExpression
-	| dereference													# derefExpression
-	| ( PLUS | MINUS | NOT) expression								# unaryExpression
-	| <assoc = right> expression POWER expression					# exponentExpression
-	| expression (ASTERISK | SLASH | MOD) expression				# multDivModExpression
-	| expression (PLUS | MINUS) expression							# addSubExpression
+	(literalValue | variableValue | enumValue | referenceValue)	# primaryExpression
+	| LEFT_PAREN expression RIGHT_PAREN							# bracketedExpression
+	| functionCall												# funcCallExpression
+	| dereference												# derefExpression
+	| ( PLUS | MINUS | NOT) expression							# unaryExpression
+	| <assoc = right> expression POWER expression				# exponentExpression
+	| expression (ASTERISK | SLASH | MOD) expression			# multDivModExpression
+	| expression (PLUS | MINUS) expression						# addSubExpression
 	| expression (
 		LESS
 		| GREATER
@@ -691,7 +701,7 @@ exitStatement: EXIT;
 // Continue
 continueStatement: CONTINUE;
 
-variableAccess: variable multibitPartAccess?;
+variableValue: variable multibitPartAccess?;
 
 // Literals 
 literalValue:
