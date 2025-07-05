@@ -1154,6 +1154,60 @@ public interface IstVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitMultDivModExpression([NotNull] stParser.MultDivModExpressionContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.unaryOperator"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitUnaryOperator([NotNull] stParser.UnaryOperatorContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.signOperator"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSignOperator([NotNull] stParser.SignOperatorContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.exponentOperator"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitExponentOperator([NotNull] stParser.ExponentOperatorContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.multDivModOperator"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitMultDivModOperator([NotNull] stParser.MultDivModOperatorContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.addSubOperator"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitAddSubOperator([NotNull] stParser.AddSubOperatorContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.comparisonOperator"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitComparisonOperator([NotNull] stParser.ComparisonOperatorContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.andOperator"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitAndOperator([NotNull] stParser.AndOperatorContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.xorOperator"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitXorOperator([NotNull] stParser.XorOperatorContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.orOperator"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitOrOperator([NotNull] stParser.OrOperatorContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="stParser.exitStatement"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

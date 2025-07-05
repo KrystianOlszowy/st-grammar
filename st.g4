@@ -1,30 +1,14 @@
 grammar st;
 
-// Definicja kanałów channels { COMMENTS, PRAGMAS } może działać ale trzeba rozbić na gramatykę i
-// lexer
-
-// TO DO: przygotowanie wniosku, swój i promotora opis, jak się uda to plan pracy magisterskiej,
-
 /* Pytania
- 1. Jak działąją dyrektywy COMMENT i reszta, chcę wrzucić VMASM w HIDDEN, AUTO READ i
- WRITE chyba będą łatwe
- 2. (*$COMMENT chcę deklarować jako 
- 3. Może dołożyć konfigurację do
- rozpoznawania, mały wysiłek a dodatkowe strony
- 4. jak radzić sobie z +1, -1 gdy mam zdefiniowane
- reguły dla lexera dla INTÓW
- 
- Podczas realizacji pracy magisterskiej napotkałem na nieprzewidziane
- trudności które wymagają dodatkowego czasu do ich rozwiązania.
- 
+ 4. jak radzić sobie z +1, -1 gdy mam
+ zdefiniowane reguły dla lexera dla INTÓW
  */
 
 // Parser //
 
 // Starting rule
 file:
-	/* configurationDeclaration |
-	 */
 	(
 		pouDeclaration
 		| usingDirective* (
@@ -33,96 +17,8 @@ file:
 			| dataTypeDeclaration
 			| classDeclaration
 			| interfaceDeclaration
-/*| accessDeclaration */
 		)
 	)+;
-
-// configuration and resource declaration
-/* 
- configurationName: IDENTIFIER;
- resourceTypeName: IDENTIFIER;
- configurationDeclaration:
- CONFIGURATION configurationName globalVarDeclarations? (
- singleResourceDeclaration
- |
- resourceDeclaration+
- ) accessDeclarations? configInit? END_CONFIGURATION;
- resourceDeclaration:
- RESOURCE resourceName ON resourceTypeName globalVarDeclarations? singleResourceDeclaration
- END_RESOURCE;
- singleResourceDeclaration: (taskConfig ';')* (programConfig ';')+;
- resourceName:
- IDENTIFIER;
- accessDeclarations: VAR_ACCESS ( accessDeclaration ';')* END_VAR;
- accessDeclaration:
- accessName ':' accessPath ':' dataTypeAccess accessDirection?;
- accessPath: (resourceName '.')?
- directVariable
- | (resourceName '.')? (programName '.')? (
- ( functionBlockInstanceName |
- classInstanceName)
- '.'
- )* symbolicVariable;
- globalVarAccess: (resourceName '.')? globalVarName
- (
- '.'
- structElementName
- )?;
- accessName: IDENTIFIER;
- programOutputAccess: programName '.'
- symbolicVariable;
- accessDirection: READ_WRITE | READ_ONLY;
- taskConfig: TASK taskName taskInit;
- taskName: IDENTIFIER;
- taskInit:
- '(' (SINGLE ':=' dataSource ',')? (
- INTERVAL ':=' dataSource
- ','
- )? PRIORITY ':=' UNSIGNED_INT ')';
- dataSource:
- literalValue
- | globalVarAccess
- |
- programOutputAccess
- | directVariable;
- programConfig:
- PROGRAM (RETAIN | NON_RETAIN)? programName
- (WITH taskName)? ':' programNameAccess (
- '(' programConfigurationElements ')'
- )?;
- programConfigurationElements:
- programConfigurationElement (',' programConfigurationElement)*;
- programConfigurationElement: functionBlockTask | programCnxn;
- functionBlockTask:
- functionBlockInstanceName WITH taskName;
- programCnxn:
- symbolicVariable ':=' programDataSource
- |
- symbolicVariable '=>' dataSink;
- programDataSource:
- literalValue
- | enumValue
- | globalVarAccess
- | directVariable;
- dataSink:
- globalVarAccess | directVariable;
- configInit: VAR_CONFIG (
- configInstInit ';')* END_VAR;
- configInstInit:
- resourceName '.' programName '.' (
- (
- functionBlockInstanceName | classInstanceName) '.'
- )*
- (
- variableName locatedAt? ':'
- locVarSpecInit
- | (
- ( functionBlockInstanceName ':' functionBlockTypeAccess)
- | (
- classInstanceName ':' classTypeAccess)
- ) ':=' structInit
- );
- */
 
 // POU declarations
 pouDeclaration:
@@ -159,19 +55,11 @@ programDeclaration:
 		| tempVarDeclarations
 		| otherVarDeclarations
 		| locatedVarDeclarations
-		/*| programAccessDeclarations*/
 	)* programBody END_PROGRAM;
 
 programName: IDENTIFIER;
 programNameAccess: (namespaceName DOT)* programName;
 programBody: statementList;
-
-/*programAccessDeclarations:
- VAR_ACCESS (programAccessDeclaration SEMICOLON)* END_VAR;
- programAccessDeclaration:
- accessName
- COLON symbolicVariable multibitPartAccess? COLON dataTypeAccess accessDirection?;
- */
 
 // User defined data type declaraction
 dataTypeDeclaration: TYPE (typeDeclaration SEMICOLON)+ END_TYPE;
@@ -224,7 +112,7 @@ subrangeSpecificationInit:
 subrangeSpecification:
 	intTypeName LEFT_PAREN subrange RIGHT_PAREN
 	| subrangeTypeAccess;
-subrangeInit: SIGNED_INT | UNSIGNED_INT;
+subrangeInit: signOperator? UNSIGNED_INT;
 
 subrangeTypeAccess: (namespaceName DOT)* subrangeTypeName;
 subrange: subrangeBegin RANGE subrangeEnd;
@@ -708,21 +596,30 @@ expression:
 	| LEFT_PAREN expression RIGHT_PAREN							# bracketedExpression
 	| functionCall												# funcCallExpression
 	| dereference												# derefExpression
-	| (PLUS | MINUS | NOT) expression							# unaryExpression
-	| <assoc = right> expression POWER expression				# exponentExpression
-	| expression (ASTERISK | SLASH | MOD) expression			# multDivModExpression
-	| expression (PLUS | MINUS) expression						# addSubExpression
-	| expression (
-		LESS
-		| GREATER
-		| LESS_EQUAL
-		| GREATER_EQUAL
-		| EQUAL
-		| NOT_EQUAL
-	) expression								# comparisonExpression
-	| expression (AMPERSAND | AND) expression	# andExpression
-	| expression XOR expression					# xorExpression
-	| expression OR expression					# orExpression;
+	| unaryOperator expression									# unaryExpression
+	| <assoc = right> expression exponentOperator expression	# exponentExpression
+	| expression multDivModOperator expression					# multDivModExpression
+	| expression addSubOperator expression						# addSubExpression
+	| expression comparisonOperator expression					# comparisonExpression
+	| expression andOperator expression							# andExpression
+	| expression xorOperator expression							# xorExpression
+	| expression orOperator expression							# orExpression;
+
+unaryOperator: signOperator | NOT;
+signOperator: PLUS | MINUS;
+exponentOperator: POWER;
+multDivModOperator: ASTERISK | SLASH | MOD;
+addSubOperator: PLUS | MINUS;
+comparisonOperator:
+	LESS
+	| GREATER
+	| LESS_EQUAL
+	| GREATER_EQUAL
+	| EQUAL
+	| NOT_EQUAL;
+andOperator: AMPERSAND | AND;
+xorOperator: XOR;
+orOperator: OR;
 
 // Exit
 exitStatement: EXIT;
@@ -744,8 +641,7 @@ literalValue:
 // Integer literals
 intLiteral: (intTypeName HASH)? intLiteralValue;
 intLiteralValue:
-	SIGNED_INT
-	| UNSIGNED_INT
+	signOperator? UNSIGNED_INT
 	| BINARY_INT
 	| OCTAL_INT
 	| HEX_INT;
@@ -770,7 +666,7 @@ multibitsTypeName: BYTE | WORD | DWORD | LWORD;
 
 // Real literals
 realLiteral: (realTypeName HASH)? realLiteralValue;
-realLiteralValue: REAL_VALUE;
+realLiteralValue: signOperator? UNSIGNED_REAL_VALUE;
 realTypeName: REAL | LREAL;
 
 // Boolean literals
@@ -792,7 +688,7 @@ timeLiteral:
 
 // Duration literals
 durationLiteral: (durationTypeName) HASH durationLiteralValue;
-durationLiteralValue: DURATION;
+durationLiteralValue: signOperator? UNSIGNED_DURATION;
 durationTypeName: TIME | LTIME;
 
 // Time of Day literals
@@ -828,7 +724,7 @@ SINGLE_BYTE_STRING: '\'' SINGLE_BYTE_CHAR* '\'';
 DOUBLE_BYTE_STRING: '"' DOUBLE_BYTE_CHAR* '"';
 
 // Date and time literal values
-DURATION: ('+' | '-')? (DIGIT+ DURATION_UNIT '_'?)+ DIGIT+ (
+UNSIGNED_DURATION: (DIGIT+ DURATION_UNIT '_'?)+ DIGIT+ (
 		'.' DIGIT+
 	)? DURATION_UNIT;
 DATE_TIME_VALUE: DATE_VALUE '-' CLOCK_TIME;
@@ -840,10 +736,9 @@ CLOCK_TIME:
 	)?;
 
 // Numeric and boolean literal values
-REAL_VALUE: ('+' | '-')? UNSIGNED_INT '.' UNSIGNED_INT (
-		'E' (SIGNED_INT | UNSIGNED_INT)
+UNSIGNED_REAL_VALUE: UNSIGNED_INT '.' UNSIGNED_INT (
+		'E' ('+' | '-')? UNSIGNED_INT
 	)?;
-SIGNED_INT: ( '+' | '-') UNSIGNED_INT;
 UNSIGNED_INT: DIGIT ( '_'? DIGIT)*;
 BINARY_INT: '2#' ( '_'? BIT)+;
 OCTAL_INT: '8#' ( '_'? OCTAL_DIGIT)+;
@@ -1097,11 +992,15 @@ fragment DURATION_UNIT:
 IDENTIFIER: NON_DIGIT (NON_DIGIT | DIGIT)*;
 
 // CPDev directives
-AUTO_DIRECTIVE: '(*$AUTO*)';
-READ_DIRECTIVE: '(*$READ*)';
-WRITE_DIRECTIVE: '(*$WRITE*)';
+CPDEV_AUTO: '(*$AUTO*)' -> channel(HIDDEN);
+CPDEV_READ: '(*$READ*)' -> channel(HIDDEN);
+CPDEV_WRITE: '(*$WRITE*)' -> channel(HIDDEN);
 
-// Pragmas, placement is important 
+// CPDev directives with parameters
+CPDEV_COMMENT: '(*$COMMENT' .*? '*)' -> channel(HIDDEN);
+CPDEV_VMASM: '(*$VMASM' .*? '*)' -> channel(HIDDEN);
+
+// Pragmas
 PRAGMA: '{' .*? '}' -> channel(HIDDEN);
 
 // Comments 

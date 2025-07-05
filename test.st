@@ -96,30 +96,31 @@ END_TYPE
 END_VAR 
 */
 
-/* 
+ (*VMASM wejscia *)
 FUNCTION SPECIAL_FUN   
-  VAR_INPUT 
-    FirstIndex: INT; 
-    LastIndex:  INT;  
+  VAR_INPUT (*COMMENT wejscia *)
+    FirstIndex: INT (*COMMENT asdasdasfa *); 
+    LastIndex: INT; 
   END_VAR 
   VAR_OUTPUT 
     Sum: INT;  
   END_VAR 
-  VAR_EXTERNAL DataArray:  
-      ARRAY [0..100] OF INT;  
+  VAR_EXTERNAL (*$AUTO*)
+    (*$READ*)
+    (*$WRITE*)
+    (*$READ*)
   END_VAR 
 
   VAR 
     b : INT ; 
-    Sum : INT:= 0 + 1; 
+    Sum : INT:=0+1; 
   END_VAR 
 
   FOR  i := FirstIndex TO LastIndex DO 
-    Sum:= Sum + DataArray[i + 1]; 
-  END_FOR 
+    Sum:= Sum+DataArray[i+1]; 
+  END_FOR; 
 
-END_FUNCTION
-*/
+END_FUNCTION;
 
 /* 
 Class CCounter 
