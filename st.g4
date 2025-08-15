@@ -1,10 +1,5 @@
 grammar st;
 
-/* Pytania
- 4. jak radzić sobie z +1, -1 gdy mam
- zdefiniowane reguły dla lexera dla INTÓW
- */
-
 // Parser //
 
 // Starting rule
@@ -991,24 +986,24 @@ fragment DURATION_UNIT:
 // General identifier rule
 IDENTIFIER: NON_DIGIT (NON_DIGIT | DIGIT)*;
 
-// CPDev directives
+// Dyrektywy CPDev
 CPDEV_AUTO: '(*$AUTO*)' -> channel(HIDDEN);
 CPDEV_READ: '(*$READ*)' -> channel(HIDDEN);
 CPDEV_WRITE: '(*$WRITE*)' -> channel(HIDDEN);
 
-// CPDev directives with parameters
+// Dyrektywy CPDev z parametrami
 CPDEV_COMMENT: '(*$COMMENT' .*? '*)' -> channel(HIDDEN);
 CPDEV_VMASM: '(*$VMASM' .*? '*)' -> channel(HIDDEN);
 
-// Pragmas
+// Dyrektywy języka
 PRAGMA: '{' .*? '}' -> channel(HIDDEN);
 
-// Comments 
+// Komentarze
 LINE_COMMENT: '//' ~[\r\n]* -> channel(HIDDEN);
 SLASH_COMMENT:
 	'/*' (SLASH_COMMENT | .)*? '*/' -> channel(HIDDEN);
 BRACE_COMMENT:
 	'(*' (BRACE_COMMENT | .)*? '*)' -> channel(HIDDEN);
 
-// Whitespaces
+// Białe znaki
 WHITESPACE: [ \t\r\n]+ -> channel(HIDDEN);

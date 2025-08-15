@@ -48,7 +48,7 @@ Console.WriteLine("Zapisano drzewo składni do tree.dot");
 
 Console.WriteLine("Drzewo składniowe pliku test.st: \n" + tree.ToStringTree(parser));
 
-//funkcja budująca plik .dot do wizualizacji drzewa przy pomocy Graphviz
+// Funkcja budująca plik .dot do wizualizacji drzewa przy pomocy Graphviz
 string ToDot(IParseTree tree, Parser parser)
 {
     int id = 0;
