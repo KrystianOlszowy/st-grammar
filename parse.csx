@@ -1,13 +1,17 @@
 #load "stLexer.cs"
 #load "stParser.cs"
+#load "stBaseVisitor.cs"
 #load "stVisitor.cs"
+
+// Klasy reprezentujące elementy drzewa składniowego oraz ich odwiedzanie
+#load "stEntities.cs"
+#load "stTreeBuilder.cs"
 
 #r "nuget: Antlr4.Runtime.Standard, 4.13.0"
 
+using System;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
-using System;
-using System.IO;
 
 public class CaseInsensitiveInputStream : AntlrInputStream
 {
@@ -30,7 +34,18 @@ if (!File.Exists(filePath))
     return;
 }
 
-var inputCode = File.ReadAllText(filePath);
+
+//var inputCode = File.ReadAllText(filePath);
+
+// Prosty kod do testów budowy drzewa
+var inputCode = @"
+PROGRAM Main
+    VAR
+        x : INT := 5;
+    END_VAR
+    x := x + 1;
+END_PROGRAM
+";
 
 // Parsowanie
 var inputStream = new CaseInsensitiveInputStream(inputCode);
@@ -40,6 +55,10 @@ var parser = new stParser(tokens);
 
 // Wypisanie drzewa gramatyki w konsoli i do pliku .dot
 var tree = parser.file();
+
+//Budowa drzewa składniowego
+var treeBuilder = new STTreeBuilder();
+var file = (STFile)treeBuilder.Visit(tree);
 
 
 var dot = ToDot(tree, parser);

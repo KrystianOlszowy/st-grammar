@@ -706,7 +706,7 @@ directVariable: DIRECT_VARIABLE;
 
 // Lexer // 
 
-// Direct access literals
+// Adresy zmiennych
 RELATIVE_ADDRESS:
 	'%' ('X' | 'B' | 'W' | 'D' | 'L')? UNSIGNED_INT;
 DIRECT_VARIABLE:
@@ -714,11 +714,11 @@ DIRECT_VARIABLE:
 		UNSIGNED_INT ( '.' UNSIGNED_INT)*
 	)?;
 
-// Character string literals
+// Literały  ciągów znakowych
 SINGLE_BYTE_STRING: '\'' SINGLE_BYTE_CHAR* '\'';
 DOUBLE_BYTE_STRING: '"' DOUBLE_BYTE_CHAR* '"';
 
-// Date and time literal values
+// Literały czasu i daty
 UNSIGNED_DURATION: (DIGIT+ DURATION_UNIT '_'?)+ DIGIT+ (
 		'.' DIGIT+
 	)? DURATION_UNIT;
@@ -730,7 +730,7 @@ CLOCK_TIME:
 		':' UNSIGNED_INT ('.' UNSIGNED_INT)?
 	)?;
 
-// Numeric and boolean literal values
+// Literały liczbowe
 UNSIGNED_REAL_VALUE: UNSIGNED_INT '.' UNSIGNED_INT (
 		'E' ('+' | '-')? UNSIGNED_INT
 	)?;
@@ -740,7 +740,7 @@ OCTAL_INT: '8#' ( '_'? OCTAL_DIGIT)+;
 HEX_INT: '16#' ( '_'? HEX_DIGIT)+;
 BOOLEAN: FALSE | TRUE;
 
-// Integer data type names
+// Słowa kluczowe typów całkowitych
 USINT: 'USINT';
 UINT: 'UINT';
 UDINT: 'UDINT';
@@ -750,11 +750,11 @@ INT: 'INT';
 DINT: 'DINT';
 LINT: 'LINT';
 
-// Real data type names
+// Słowa kluczowe typów rzeczywistych
 REAL: 'REAL';
 LREAL: 'LREAL';
 
-// Multibit data type names
+// Słowa kluczowe typów bitowych
 BYTE: 'BYTE';
 WORD: 'WORD';
 DWORD: 'DWORD';
@@ -765,13 +765,13 @@ BOOL: 'BOOL';
 FALSE: 'FALSE';
 TRUE: 'TRUE';
 
-// Character and string type names
+// Słowa kluczowe typów znakowych
 STRING: 'STRING';
 WSTRING: 'WSTRING';
 CHAR: 'CHAR';
 WCHAR: 'WCHAR';
 
-// Date type names
+// Słowa kluczowe typów czasu i daty
 TIME: 'TIME' | 'T';
 LTIME: 'LTIME' | 'LT';
 TIME_OF_DAY: 'TIME_OF_DAY' | 'TOD';
@@ -781,28 +781,25 @@ LDATE: 'LDATE' | 'LD';
 DATE_AND_TIME: 'DATE_AND_TIME' | 'DT';
 LDATE_AND_TIME: 'LDATE_AND_TIME' | 'LDT';
 
-// User defined data types keywords
+// Słowa kluczowe typów definiowanych przez użytkownika
 TYPE: 'TYPE';
 END_TYPE: 'END_TYPE';
 
-// Array declaration keywords
+// Słowa kluczowe tablic
 ARRAY: 'ARRAY';
 OF: 'OF';
 
-// Structure declaration keywords
+// Słowa kluczowe struktur
 STRUCT: 'STRUCT';
 OVERLAP: 'OVERLAP';
 END_STRUCT: 'END_STRUCT';
 
-// Direct variable declaration keywords
-AT: 'AT';
-
-// References kewords
+// Słowa kluczowe referencji
 REF_TO: 'REF_TO';
 REF: 'REF';
 NULL: 'NULL';
 
-// Main variable declarations keywords
+// Słowa kluczowe deklaracji zmiennych
 VAR_INPUT: 'VAR_INPUT';
 R_EDGE: 'R_EDGE';
 F_EDGE: 'F_EDGE';
@@ -816,12 +813,13 @@ CONSTANT: 'CONSTANT';
 VAR_TEMP: 'VAR_TEMP';
 VAR_EXTERNAL: 'VAR_EXTERNAL';
 VAR_GLOBAL: 'VAR_GLOBAL';
+AT: 'AT';
 
-// Function declaration keywords
+// Słowa kluczowe funkcji
 FUNCTION: 'FUNCTION';
 END_FUNCTION: 'END_FUNCTION';
 
-// Function block and class declaration keywords
+// Słowa kluczowe obiektów z pamięcią
 FUNCTION_BLOCK: 'FUNCTION_BLOCK';
 FINAL: 'FINAL';
 ABSTRACT: 'ABSTRACT';
@@ -843,32 +841,17 @@ INTERNAL: 'INTERAL';
 SUPER: 'SUPER';
 RETURN: 'RETURN';
 
-// Program declaration keywords
+// Słowa kluczowe programów
 PROGRAM: 'PROGRAM';
 END_PROGRAM: 'END_PROGRAM';
 VAR_ACCESS: 'VAR_ACCESS';
 
-// Configuration and resource declaration keywords
-CONFIGURATION: 'CONFIGURATION';
-END_CONFIGURATION: 'END_CONFIGURATION';
-RESOURCE: 'RESOURCE';
-ON: 'ON';
-END_RESOURCE: 'END_RESOURCE';
-READ_WRITE: 'READ_WRITE';
-READ_ONLY: 'READ_ONLY';
-TASK: 'TASK';
-SINGLE: 'SINGLE';
-INTERVAL: 'INTERVAL';
-PRIORITY: 'PRIORITY';
-WITH: 'WITH';
-VAR_CONFIG: 'VAR_CONFIG';
-
-// Namespace declaration keywords
+// Słowa kluczowe przestrzeni nazw
 NAMESPACE: 'NAMESPACE';
 END_NAMESPACE: 'END_NAMESPACE';
 USING: 'USING';
 
-// Selection statements keywords
+// Słowa kluczowe innstrukcji warunkowych
 IF: 'IF';
 THEN: 'THEN';
 ELSIF: 'ELSIF';
@@ -877,7 +860,7 @@ END_IF: 'END_IF';
 CASE: 'CASE';
 END_CASE: 'END_CASE';
 
-// Loop statements keywords
+// Słowa kluczowe instrukcji pętli
 EXIT: 'EXIT';
 CONTINUE: 'CONTINUE';
 FOR: 'FOR';
@@ -891,7 +874,7 @@ REPEAT: 'REPEAT';
 UNTIL: 'UNTIL';
 END_REPEAT: 'END_REPEAT';
 
-// Arithmetic operators
+// Operatory arytmetyczne
 PLUS: '+';
 MINUS: '-';
 ASTERISK: '*';
@@ -899,7 +882,7 @@ POWER: '**';
 SLASH: '/';
 MOD: 'MOD';
 
-// Relational operators
+// Operatory relacyjne
 EQUAL: '=';
 NOT_EQUAL: '<>';
 LESS: '<';
@@ -907,19 +890,19 @@ LESS_EQUAL: '<=';
 GREATER: '>';
 GREATER_EQUAL: '>=';
 
-// Logical/bitwise operators
+// Operaotry logiczne
 AND: 'AND';
 OR: 'OR';
 NOT: 'NOT';
 XOR: 'XOR';
 AMPERSAND: '&';
 
-// Assignment operators
+// Operatory przypisania
 ASSIGN: ':=';
 ASSIGN_OUT: '=>';
 ATTEMPT_ASSIGN: '?=';
 
-// Delimiter characters
+// Separatory
 LEFT_PAREN: '(';
 RIGHT_PAREN: ')';
 LEFT_BRACKET: '[';
@@ -930,7 +913,7 @@ SEMICOLON: ';';
 DOT: '.';
 RANGE: '..';
 
-// Special characters
+// Znaki specjalne
 HASH: '#';
 CARET: '^';
 PERCENT: '%';
@@ -983,7 +966,7 @@ fragment DURATION_UNIT:
 	| 'US'
 	| 'NS';
 
-// General identifier rule
+// Identyfikatory
 IDENTIFIER: NON_DIGIT (NON_DIGIT | DIGIT)*;
 
 // Dyrektywy CPDev
