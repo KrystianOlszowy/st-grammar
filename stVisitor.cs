@@ -500,12 +500,6 @@ public interface IstVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitReferenceTypeAccess([NotNull] stParser.ReferenceTypeAccessContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="stParser.referenceAssign"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitReferenceAssign([NotNull] stParser.ReferenceAssignContext context);
-	/// <summary>
 	/// Visit a parse tree produced by <see cref="stParser.referenceName"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -614,35 +608,17 @@ public interface IstVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitVariableName([NotNull] stParser.VariableNameContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="stParser.multiElementVariable"/>.
+	/// Visit a parse tree produced by <see cref="stParser.variableElementSelect"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitMultiElementVariable([NotNull] stParser.MultiElementVariableContext context);
+	Result VisitVariableElementSelect([NotNull] stParser.VariableElementSelectContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="stParser.subscriptList"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitSubscriptList([NotNull] stParser.SubscriptListContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="stParser.subscript"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitSubscript([NotNull] stParser.SubscriptContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="stParser.structElementSelect"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitStructElementSelect([NotNull] stParser.StructElementSelectContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="stParser.structElementVariable"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitStructElementVariable([NotNull] stParser.StructElementVariableContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="stParser.ioVarDeclarations"/>.
 	/// </summary>
@@ -944,11 +920,11 @@ public interface IstVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitAssignStatement([NotNull] stParser.AssignStatementContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="stParser.assignmentAttempt"/>.
+	/// Visit a parse tree produced by <see cref="stParser.assignOperator"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitAssignmentAttempt([NotNull] stParser.AssignmentAttemptContext context);
+	Result VisitAssignOperator([NotNull] stParser.AssignOperatorContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="stParser.subprogControlStatement"/>.
 	/// </summary>

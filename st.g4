@@ -242,13 +242,6 @@ referenceAddress:
 	) RIGHT_PAREN;
 
 referenceTypeAccess: (namespaceName DOT)* referenceTypeName;
-
-referenceAssign:
-	referenceName ASSIGN (
-		referenceName
-		| dereference
-		| referenceValue
-	);
 referenceName: IDENTIFIER;
 dereference: referenceName CARET+;
 
@@ -302,22 +295,17 @@ derivedTypeAccess:
 	| referenceTypeAccess
 	| interfaceTypeAccess;
 
-// Variable access
+// Variable access [GIT]
 variable: directVariable | symbolicVariable;
-symbolicVariable: (( THIS COMMA) | ( namespaceName COMMA)+)? (
-		variableAccess
-		| multiElementVariable
+symbolicVariable: (THIS DOT | (namespaceName DOT)+)? (
+		variableAccess (variableElementSelect)*
 	);
 variableAccess: variableName | dereference;
 variableName: IDENTIFIER;
 
-multiElementVariable:
-	variableAccess (subscriptList | structElementSelect)+;
+variableElementSelect: subscriptList | COMMA variableAccess;
 subscriptList:
-	LEFT_BRACKET subscript (COMMA subscript)* RIGHT_BRACKET;
-subscript: expression;
-structElementSelect: COMMA structElementVariable;
-structElementVariable: variableAccess;
+	LEFT_BRACKET expression (COMMA expression)* RIGHT_BRACKET;
 
 // Input variable declarations [!!!]
 ioVarDeclarations:
@@ -510,15 +498,9 @@ statement:
 	| selectionStatement
 	| loopStatement;
 
-assignStatement: (variable ASSIGN expression)
-	| referenceAssign
-	| assignmentAttempt;
+assignStatement: variable assignOperator expression;
 
-assignmentAttempt: (referenceName | dereference) ATTEMPT_ASSIGN (
-		referenceName
-		| dereference
-		| referenceValue
-	);
+assignOperator: ASSIGN | ATTEMPT_ASSIGN;
 
 subprogControlStatement:
 	functionCall
@@ -542,7 +524,6 @@ invocationStatement: (
 	) LEFT_PAREN (parameterAssign (COMMA parameterAssign)*)? RIGHT_PAREN;
 
 parameterAssign: ((variableName ASSIGN)? expression)
-	| referenceAssign
 	| (NOT? variableName ASSIGN_OUT variable);
 
 superCallStatement: SUPER LEFT_PAREN RIGHT_PAREN;
@@ -731,9 +712,8 @@ CLOCK_TIME:
 	)?;
 
 // Literały liczbowe
-UNSIGNED_REAL_VALUE: UNSIGNED_INT '.' UNSIGNED_INT (
-		'E' ('+' | '-')? UNSIGNED_INT
-	)?;
+UNSIGNED_REAL_VALUE:
+	UNSIGNED_INT '.' UNSIGNED_INT ('E' ('+' | '-')? UNSIGNED_INT)?;
 UNSIGNED_INT: DIGIT ( '_'? DIGIT)*;
 BINARY_INT: '2#' ( '_'? BIT)+;
 OCTAL_INT: '8#' ( '_'? OCTAL_DIGIT)+;

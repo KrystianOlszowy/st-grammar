@@ -6,6 +6,7 @@
 // Klasy reprezentujące elementy drzewa składniowego oraz ich odwiedzanie
 #load "stEntities.cs"
 #load "stTreeBuilder.cs"
+#load "stPrinter.cs"
 
 #r "nuget: Antlr4.Runtime.Standard, 4.13.0"
 
@@ -41,9 +42,9 @@ if (!File.Exists(filePath))
 var inputCode = @"
 PROGRAM Main
     VAR
-        x : INT := 5;
+         x : INT := 5;
     END_VAR
-    x := x + 1;
+        x := x + 1;
 END_PROGRAM
 ";
 
@@ -56,10 +57,13 @@ var parser = new stParser(tokens);
 // Wypisanie drzewa gramatyki w konsoli i do pliku .dot
 var tree = parser.file();
 
+
 //Budowa drzewa składniowego
 var treeBuilder = new STTreeBuilder();
 var file = (STFile)treeBuilder.Visit(tree);
 
+var printer = new STPrinter();
+printer.Print(file);
 
 var dot = ToDot(tree, parser);
 File.WriteAllText("tree.dot", dot);

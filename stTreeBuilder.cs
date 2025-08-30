@@ -2,122 +2,317 @@ using System;
 using System.Collections.Generic;
 using Antlr4.Runtime.Tree;
 
-public class STTreeBuilder : stBaseVisitor<STEntity>
+public class STTreeBuilder : stBaseVisitor<object>
 {
-    // -----------------------------
-    // POU (Program, Function, FB)
-    // -----------------------------
-    public override STEntity VisitProgramDeclaration(stParser.ProgramDeclarationContext context)
+    // CAŁY PLIK //
+    public override STFile VisitFile(stParser.FileContext context)
+    {
+        var file = new STFile
+        {
+            Declarations = new List<STDeclaration>()
+        };
+
+        foreach (var decl in context.pouDeclaration())
+        {
+            if (Visit(decl) is STDeclaration declaration)
+                file.Declarations.Add(declaration);
+        }
+
+        return file;
+    }
+
+    // DEKLARACJE //
+
+    // PROGRAM
+    public override STProgram VisitProgramDeclaration(stParser.ProgramDeclarationContext context)
     {
         var program = new STProgram
         {
-            Name = context.programName().GetText()
+            Name = context.programName().GetText(),
+            Variables = new List<STVariable>(),
+            Body = new List<STStatement>()
         };
 
-        // zmienne
-        foreach (var normalDecl in context.normalVarDeclarations())
+        // deklaracje zmiennych lokalnych dla programu
+        if (context.normalVarDeclarations() != null)
         {
-            var vars = (List<STVariable>)Visit(normalDecl);
-            program.Variables.AddRange(vars);
+            foreach (var normalVarDeclarations in context.normalVarDeclarations())
+            {
+                program.Variables.AddRange(VisitNormalVarDeclarations(normalVarDeclarations));
+            }
         }
 
-        // ciało
         if (context.programBody() != null)
         {
-            foreach (var statement in context.programBody().statementList().statement())
-                program.Body.Add((STStatement)Visit(statement));
+            program.Body = VisitProgramBody(context.programBody());
         }
 
         return program;
     }
 
-    // -----------------------------
-    // Deklaracje zmiennych
-    // -----------------------------
-    public override STEntity VisitNormalVarDeclarations(stParser.NormalVarDeclarationsContext context)
+    public override List<STStatement> VisitProgramBody(stParser.ProgramBodyContext context)
     {
-        var result = new List<STVariable>();
-
-        foreach (var decl in context.varDeclarationInit())
-        {
-            var varDecls = (List<STVariable>)Visit(decl);
-            result.AddRange(varDecls);
-        }
-
-        return result;
+        return VisitStatementList(context.statementList());
     }
 
-    public override STEntity VisitVarDeclarationInit(stParser.VarDeclarationInitContext context)
+    // ZMIENNE 
+    public override List<STVariable> VisitNormalVarDeclarations(stParser.NormalVarDeclarationsContext context)
     {
-        var vars = new List<STVariable>();
+        var variables = new List<STVariable>();
 
-        var names = context.variableList()?.variableName()
-                                 .Select(v => v.GetText())
-                                 .ToList();
-
-        // np. "x : INT := 5"
-        if (context.simpleSpecificationInit() != null)
+        foreach (var declaration in context.varDeclarationInit())
         {
-            var typeName = context.simpleSpecificationInit().simpleTypeName().GetText();
-            STExpression initExpr = null;
+            variables.AddRange(VisitVarDeclarationInit(declaration));
+        }
 
-            if (context.simpleSpecificationInit().expression() != null)
-                initExpr = (STExpression)Visit(context.simpleSpecificationInit().expression());
+        return variables;
+    }
 
-            foreach (var n in names)
+    public override List<STVariable> VisitVarDeclarationInit(stParser.VarDeclarationInitContext context)
+    {
+        var variables = new List<STVariable>();
+
+        foreach (string variableName in VisitVariableList(context.variableList()))
+        {
+            // Obsługa inicjalizacji zmiennej
+            if (context.simpleSpecificationInit().simpleInit() != null)
             {
-                vars.Add(new STVariable {
-                    Name = n,
-                    Type = typeName,
-                    InitialValue = initExpr
+
+                variables.Add(new STVariable
+                {
+                    Name = variableName,
+                    Type = context.simpleSpecificationInit().simpleSpecification().GetText(),
+                    InitialValue = (STExpression)Visit(context.simpleSpecificationInit().simpleInit().expression())
+                });
+            }
+            else // Deklaracja bez inicjalizacji
+            {
+                variables.Add(new STVariable
+                {
+                    Name = variableName,
+                    Type = context.simpleSpecificationInit().simpleSpecification().GetText()
                 });
             }
         }
-
-        return vars;
+        return variables;
     }
 
-    // -----------------------------
-    // Instrukcje
-    // -----------------------------
-    public override STEntity VisitAssignmentStatement(stParser.AssignmentStatementContext context)
+    // Lista zmiennych przy tworzeniu zmiennych np. VAR x, y, z : INT;
+    public override List<string> VisitVariableList(stParser.VariableListContext context)
+    {
+        var names = new List<string>();
+        foreach (var name in context.variableName())
+        {
+            names.Add(name.GetText());
+        }
+        return names;
+    }
+
+    // INSTRUKCJE //
+    public override List<STStatement> VisitStatementList(stParser.StatementListContext context)
+    {
+        var statements = new List<STStatement>();
+
+        foreach (var stmt in context.statement())
+        {
+            if (Visit(stmt) is STStatement statement)
+                statements.Add(statement);
+        }
+
+        return statements;
+    }
+
+    // Przypisanie
+    public override STAssignment VisitAssignStatement(stParser.AssignStatementContext context)
     {
         return new STAssignment
         {
-            Target = (STExpression)Visit(context.variable()),
+            Target = (STVariableAccess)VisitVariable(context.variable()),
+            Operator = context.assignOperator().GetText(),
             Value = (STExpression)Visit(context.expression())
         };
     }
 
-    // -----------------------------
-    // Wyrażenia
-    // -----------------------------
-    public override STEntity VisitIdentifier(stParser.IdentifierContext context)
+    // Dostęp do zmiennej
+    public override STVariableAccess VisitVariable(stParser.VariableContext context)
     {
-        return new STIdentifier { Name = context.GetText() };
-    }
+        if (context.directVariable() != null)
+            return new STVariableAccess
+            {
+                Address = context.directVariable().GetText()
+            };
 
-    public override STEntity VisitIntegerLiteral(stParser.IntegerLiteralContext context)
-    {
-        return new STLiteral { Value = context.GetText() };
-    }
-
-    public override STEntity VisitBinaryExpression(stParser.BinaryExpressionContext context)
-    {
-        return new STBinaryOperation
+        if (context.symbolicVariable() != null)
         {
-            Operator = context.op.Text,
-            Left = (STExpression)Visit(context.left),
-            Right = (STExpression)Visit(context.right)
+            return VisitSymbolicVariable(context.symbolicVariable());
+        }
+
+        return null;
+    }
+
+    public override STVariableAccess VisitSymbolicVariable(stParser.SymbolicVariableContext context)
+    {
+        var varAccess = new STVariableAccess
+        {
+            IsThis = context.THIS() != null
+        };
+
+        foreach (var ns in context.namespaceName())
+            varAccess.NamespacePath.Add(ns.GetText());
+
+        if (context.variableAccess().variableName() != null)
+        {
+            varAccess.Name = context.variableAccess().variableName().GetText();
+        }
+        else if (context.variableAccess().dereference().referenceName() != null)
+        {
+            varAccess.Name = context.variableAccess().dereference().referenceName().GetText();
+            varAccess.Selectors.Add(new STDereferenceSelector());
+        }
+
+        foreach (var selector in context.variableElementSelect())
+        {
+            if (selector.subscriptList() != null)
+            {
+                var newSelector = new STIndexSelector();
+                foreach (var exp in selector.subscriptList().expression())
+                {
+                    newSelector.Indexes.Add((STExpression)Visit(exp));
+                }
+                varAccess.Selectors.Add(newSelector);
+            }
+            else if (selector.variableAccess() != null)
+            {
+                if (selector.variableAccess().variableName() != null)
+                {
+                    varAccess.Selectors.Add(new STFieldSelector { FieldName = selector.variableAccess().variableName().GetText() });
+                }
+                else if (selector.variableAccess().dereference().referenceName() != null)
+                {
+                    varAccess.Selectors.Add(new STFieldSelector { FieldName = selector.variableAccess().dereference().referenceName().GetText() });
+                    for (int i = 0; i < selector.variableAccess().dereference().CARET().Length; i++)
+                    {
+                        varAccess.Selectors.Add(new STDereferenceSelector());
+                    }
+                }
+            }
+        }
+        return varAccess;
+    }
+
+    /*
+    // IF-ELSIF-ELSE
+    public override STEntity VisitIfStatement(stParser.IfStatementContext context)
+    {
+        var ifStmt = new STIf
+        {
+            Condition = (STExpression)Visit(context.expression()),
+            ThenBranch = BuildStatementList(context.statementList(0))
+        };
+
+        // ELSIF-y
+        for (int i = 1; i < context.expression().Length; i++)
+        {
+            ifStmt.ElseIfBranches.Add((
+                (STExpression)Visit(context.expression(i)),
+                BuildStatementList(context.statementList(i))
+            ));
+        }
+
+        // ELSE
+        if (context.ELSE() != null)
+        {
+            var elseList = context.statementList(context.statementList().Length - 1);
+            ifStmt.ElseBranch = BuildStatementList(elseList);
+        }
+
+        return ifStmt;
+    }
+
+    // WHILE
+    public override STEntity VisitWhileStatement(stParser.WhileStatementContext context)
+    {
+        return new STWhile
+        {
+            Condition = (STExpression)Visit(context.expression()),
+            Body = BuildStatementList(context.statementList())
         };
     }
 
-    public override STEntity VisitArrayAccess(stParser.ArrayAccessContext context)
+    // FOR
+    public override STEntity VisitForStatement(stParser.ForStatementContext context)
     {
-        return new STArrayAccess
+        return new STFor
         {
-            Array = (STExpression)Visit(context.variable()),
-            Index = (STExpression)Visit(context.expression())
+            Variable = context.controlVariable().GetText(),
+            From = (STExpression)Visit(context.forRange().expression(0)),
+            To = (STExpression)Visit(context.forRange().expression(1)),
+            By = context.forRange().expression().Length > 2
+                ? (STExpression)Visit(context.forRange().expression(2))
+                : null,
+            Body = BuildStatementList(context.statementList())
         };
     }
+
+    // FUNCTION CALL
+    public override STEntity VisitFunctionCall(stParser.FunctionCallContext context)
+    {
+        var call = new STFunctionCall
+        {
+            Function = new STQualifiedName
+            {
+                Parts = new List<string> { context.functionAccess().GetText() }
+            }
+        };
+
+        if (context.parameterAssign() != null)
+        {
+            foreach (var param in context.parameterAssign())
+                call.Arguments.Add((STExpression)Visit(param));
+        }
+
+        return call;
+    }
+    */
+    // EXPRESSIONS
+    public override STExpression VisitPrimaryExpression(stParser.PrimaryExpressionContext context)
+    {
+        if (context.literalValue() != null)
+            return new STLiteral { Value = context.literalValue().GetText() };
+
+        if (context.variableValue() != null)
+            return VisitVariable(context.variableValue().variable());
+            
+        return null;
+    }
+
+    public override STUnaryExpression VisitUnaryExpression(stParser.UnaryExpressionContext context)
+    {
+        return new STUnaryExpression
+        {
+            Operator = context.unaryOperator().GetText(),
+            Operand = (STExpression)Visit(context.expression())
+        };
+    }
+
+    public override STBinaryExpression VisitAddSubExpression(stParser.AddSubExpressionContext context)
+    {
+        return new STBinaryExpression
+        {
+            Operator = context.addSubOperator().GetText(),
+            Left = (STExpression)Visit(context.expression(0)),
+            Right = (STExpression)Visit(context.expression(1))
+        };
+    }
+
+    public override STBinaryExpression VisitComparisonExpression(stParser.ComparisonExpressionContext context)
+    {
+        return new STBinaryExpression
+        {
+            Operator = context.comparisonOperator().GetText(),
+            Left = (STExpression)Visit(context.expression(0)),
+            Right = (STExpression)Visit(context.expression(1))
+        };
+    }
+
 }
