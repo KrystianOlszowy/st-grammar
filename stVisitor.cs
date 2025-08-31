@@ -1130,6 +1130,12 @@ public interface IstVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitMultDivModExpression([NotNull] stParser.MultDivModExpressionContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.derefOperator"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitDerefOperator([NotNull] stParser.DerefOperatorContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="stParser.unaryOperator"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

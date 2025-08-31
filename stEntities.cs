@@ -195,8 +195,8 @@ public class STPouParameter : STExpression
     public STExpression Value { get; set; }
 }
 
-// Dereferencja
+// Dereferencja jako wyrażenie
 public class STDereference : STExpression
 {
-    public STExpression Target { get; set; }
+    public STExpression Operand { get; set; }
 }

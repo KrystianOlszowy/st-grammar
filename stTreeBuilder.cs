@@ -271,11 +271,11 @@ public class STTreeBuilder : stBaseVisitor<object>
 
         if (context.referenceValue() != null)
             return new STLiteral { Value = Visit(context.referenceValue()) };
-        
+
         return null;
     }
 
-       // FUNCTION CALL
+    // FUNCTION CALL
     public override STFunctionCall VisitFunctionCall(stParser.FunctionCallContext context)
     {
         var call = new STFunctionCall
@@ -287,14 +287,15 @@ public class STTreeBuilder : stBaseVisitor<object>
             call.NamespacePath.Add(ns.GetText());
 
         if (context.parameterAssign() != null)
-            {
-                foreach (var param in context.parameterAssign())
-                    call.Parameters.Add(VisitParameterAssign(param));
-            }
+        {
+            foreach (var param in context.parameterAssign())
+                call.Parameters.Add(VisitParameterAssign(param));
+        }
 
         return call;
     }
 
+    // Parametry wywołania POU
     public override STPouParameter VisitParameterAssign(stParser.ParameterAssignContext context)
     {
         var param = new STPouParameter();
@@ -332,6 +333,14 @@ public class STTreeBuilder : stBaseVisitor<object>
         return enumValue;
     }
 
+    public override STDereference VisitDerefExpression(stParser.DerefExpressionContext context)
+    {
+        return new STDereference
+        {
+            Operand = (STExpression)Visit(context.expression())
+        };
+    }
+
     // Wyrażenie z operatorem jednoargumentowym
     public override STUnaryExpression VisitUnaryExpression(stParser.UnaryExpressionContext context)
     {
@@ -342,7 +351,26 @@ public class STTreeBuilder : stBaseVisitor<object>
         };
     }
 
-    // Wyrażenia z operatorami 2 arumentowymi
+    // Wyrażenia z operatorami 2 argumentowymi
+    public override STBinaryExpression VisitExponentExpression(stParser.ExponentExpressionContext context)
+    {
+        return new STBinaryExpression
+        {
+            Operator = context.exponentOperator().GetText(),
+            Left = (STExpression)Visit(context.expression(0)),
+            Right = (STExpression)Visit(context.expression(1))
+        };
+    }
+
+    public override STBinaryExpression VisitMultDivModExpression(stParser.MultDivModExpressionContext context)
+    {
+        return new STBinaryExpression
+        {
+            Operator = context.multDivModOperator().GetText(),
+            Left = (STExpression)Visit(context.expression(0)),
+            Right = (STExpression)Visit(context.expression(1))
+        };
+    }
     public override STBinaryExpression VisitAddSubExpression(stParser.AddSubExpressionContext context)
     {
         return new STBinaryExpression
@@ -363,4 +391,33 @@ public class STTreeBuilder : stBaseVisitor<object>
         };
     }
 
+    public override STBinaryExpression VisitAndExpression(stParser.AndExpressionContext context)
+    {
+        return new STBinaryExpression
+        {
+            Operator = context.andOperator().GetText(),
+            Left = (STExpression)Visit(context.expression(0)),
+            Right = (STExpression)Visit(context.expression(1))
+        };
+    }
+
+    public override STBinaryExpression VisitXorExpression(stParser.XorExpressionContext context)
+    {
+        return new STBinaryExpression
+        {
+            Operator = context.xorOperator().GetText(),
+            Left = (STExpression)Visit(context.expression(0)),
+            Right = (STExpression)Visit(context.expression(1))
+        };
+    }
+
+    public override STBinaryExpression VisitOrExpression(stParser.OrExpressionContext context)
+    {
+        return new STBinaryExpression
+        {
+            Operator = context.orOperator().GetText(),
+            Left = (STExpression)Visit(context.expression(0)),
+            Right = (STExpression)Visit(context.expression(1))
+        };
+    }
 }

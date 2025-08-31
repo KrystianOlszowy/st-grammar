@@ -258,9 +258,9 @@ functionBlockDeclaration:
 	)* (methodDeclaration)* functionBlockBody END_FUNCTION_BLOCK;
 
 functionBlockName: IDENTIFIER;
-functionBlockInstanceName: (namespaceName COMMA)* functionBlockName CARET*;
+functionBlockInstanceName: (namespaceName DOT)* functionBlockName CARET*;
 
-functionBlockTypeAccess: (namespaceName COMMA)* functionBlockTypeName;
+functionBlockTypeAccess: (namespaceName DOT)* functionBlockTypeName;
 functionBlockTypeName: IDENTIFIER;
 functionBlockBody: statementList;
 
@@ -295,7 +295,7 @@ derivedTypeAccess:
 	| referenceTypeAccess
 	| interfaceTypeAccess;
 
-// Variable access [GIT]
+// Variable access
 variable: directVariable | symbolicVariable;
 symbolicVariable: (THIS DOT | (namespaceName DOT)+)? (
 		variableAccess (variableElementSelect)*
@@ -571,7 +571,7 @@ expression:
 	(literalValue | variableValue | enumValue | referenceValue)	# primaryExpression
 	| LEFT_PAREN expression RIGHT_PAREN							# bracketedExpression
 	| functionCall												# funcCallExpression
-	| dereference												# derefExpression
+	| expression derefOperator+									# derefExpression
 	| unaryOperator expression									# unaryExpression
 	| <assoc = right> expression exponentOperator expression	# exponentExpression
 	| expression multDivModOperator expression					# multDivModExpression
@@ -581,6 +581,7 @@ expression:
 	| expression xorOperator expression							# xorExpression
 	| expression orOperator expression							# orExpression;
 
+derefOperator: CARET;
 unaryOperator: signOperator | NOT;
 signOperator: PLUS | MINUS;
 exponentOperator: POWER;

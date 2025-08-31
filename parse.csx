@@ -41,10 +41,7 @@ if (!File.Exists(filePath))
 // Prosty kod do testów budowy drzewa
 var inputCode = @"
 PROGRAM Main
-    VAR
-         x : INT := 5;
-    END_VAR
-        x := elo.elo.pies(nogi := 4, NOT szybkosc => szybkoscPsa);
+        x := 2 + 1 >= 7 AND TRUE;
 END_PROGRAM
 ";
 
