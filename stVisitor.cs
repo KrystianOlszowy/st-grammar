@@ -932,6 +932,12 @@ public interface IstVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitSubprogControlStatement([NotNull] stParser.SubprogControlStatementContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.functionCallStatement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitFunctionCallStatement([NotNull] stParser.FunctionCallStatementContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="stParser.functionCall"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -985,6 +991,36 @@ public interface IstVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitIfStatement([NotNull] stParser.IfStatementContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.ifCondition"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitIfCondition([NotNull] stParser.IfConditionContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.ifStatementList"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitIfStatementList([NotNull] stParser.IfStatementListContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.elsifCondition"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitElsifCondition([NotNull] stParser.ElsifConditionContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.elsifStatementList"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitElsifStatementList([NotNull] stParser.ElsifStatementListContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="stParser.elseStatementList"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitElseStatementList([NotNull] stParser.ElseStatementListContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="stParser.caseStatement"/>.
 	/// </summary>

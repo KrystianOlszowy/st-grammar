@@ -41,6 +41,7 @@ public class STFunctionBlock : STPou { }
 // INSTRUKCJE
 public abstract class STStatement : STEntity { }
 
+// Instrukcja przypisania
 public class STAssignment : STStatement
 {
     public STVariableAccess Target { get; set; }
@@ -49,28 +50,18 @@ public class STAssignment : STStatement
     public STExpression Value { get; set; }
 }
 
-
-// Wywołanie funkcji jako instrukcji
+// Wywołanie funkcji jako samodzielnej instrukcji
 public class STFunctionCallStatement : STStatement
 {
-    public STFunctionCall Call { get; set; }
-}
-
-// Wywołanie metody/FB
-public class STInvocation : STStatement
-{
-    public STExpression Target { get; set; }
-    public List<STExpression> Arguments { get; set; } = new();
+    public STFunctionCall FunctionCall { get; set; }
 }
 
 public class STSuperCall : STStatement { }
 
 // Return
-public class STReturn : STStatement
-{
-    public STExpression Value { get; set; }
-}
+public class STReturn : STStatement { }
 
+// IF
 public class STIf : STStatement
 {
     public STExpression Condition { get; set; }
@@ -79,64 +70,79 @@ public class STIf : STStatement
     public List<STStatement> ElseBranch { get; set; } = new();
 }
 
+// CASE
 public class STCase : STStatement
 {
-    public STExpression Expression { get; set; }
+    public STExpression Selector { get; set; }
     public List<STCaseSelection> Selections { get; set; } = new();
     public List<STStatement> ElseBranch { get; set; } = new();
 }
 
-public class STCaseSelection
+public class STCaseSelection : STEntity
 {
-    public List<STExpression> Labels { get; set; } = new();
+    public List<STCaseLabel> Labels { get; set; } = new();
     public List<STStatement> Body { get; set; } = new();
+}
+
+// etykiety dla CASE
+public abstract class STCaseLabel : STEntity { }
+
+public class STCaseExpressionLabel : STCaseLabel
+{
+    public STExpression Expression { get; set; }
+}
+
+public class STCaseRangeLabel : STCaseLabel
+{
+    public STExpression From { get; set; }
+    public STExpression To { get; set; }
 }
 
 public class STFor : STStatement
 {
-    public string Variable { get; set; }
+    public string Iterator { get; set; }
     public STExpression From { get; set; }
     public STExpression To { get; set; }
     public STExpression By { get; set; }
     public List<STStatement> Body { get; set; } = new();
 }
-
+// WHILE
 public class STWhile : STStatement
 {
     public STExpression Condition { get; set; }
     public List<STStatement> Body { get; set; } = new();
 }
 
+// REPEAT
 public class STRepeat : STStatement
 {
     public List<STStatement> Body { get; set; } = new();
     public STExpression Until { get; set; }
 }
 
-// WYRAŻENIA
+// CONTINUE
+public class STContinue : STStatement { }
+
+// EXIT
+public class STExit : STStatement { }
+
+// Wyrażenia //
 public abstract class STExpression : STEntity { }
 
-public class STQualifiedName : STExpression
-{
-    public List<string> Parts { get; set; } = new();
-
-    public override string ToString() => string.Join(".", Parts);
-}
+// Wyrażenie z operatorem jednoargumentowym
 public class STUnaryExpression : STExpression
 {
     public string Operator { get; set; } // np. "-", "NOT"
     public STExpression Operand { get; set; }
 }
 
+// Wyrażenie z operatorami 2 argumentowymi
 public class STBinaryExpression : STExpression
 {
     public string Operator { get; set; } // "+", "-", "*", "/", AND, OR, XOR, =
     public STExpression Left { get; set; }
     public STExpression Right { get; set; }
 }
-
-
-// Podstawowe wyrażenia //
 
 // Literały
 public class STLiteral : STExpression
@@ -148,11 +154,9 @@ public class STLiteral : STExpression
 public class STVariableAccess : STExpression
 {
     public string Name { get; set; }
-
     public string Address { get; set; }
     public bool IsThis { get; set; } = false;
     public List<string> NamespacePath { get; set; } = new();
-
     public List<STVariableSelector> Selectors { get; set; } = new();
 }
 
@@ -181,9 +185,7 @@ public class STEnumValue : STExpression
 public class STFunctionCall : STExpression
 {
     public string Name { get; set; }
-
     public List<string> NamespacePath { get; set; } = new();
-
     public List<STPouParameter> Parameters { get; set; } = new();
 }
 

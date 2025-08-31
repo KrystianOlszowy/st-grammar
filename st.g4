@@ -503,10 +503,12 @@ assignStatement: variable assignOperator expression;
 assignOperator: ASSIGN | ATTEMPT_ASSIGN;
 
 subprogControlStatement:
-	functionCall
+	functionCallStatement
 	| invocationStatement
 	| superCallStatement
 	| returnStatement;
+
+functionCallStatement : functionCall;
 
 functionCall:
 	functionAccess LEFT_PAREN (
@@ -534,9 +536,15 @@ selectionStatement: ifStatement | caseStatement;
 
 // If
 ifStatement:
-	IF expression THEN statementList (
-		ELSIF expression THEN statementList
-	)* (ELSE statementList)? END_IF;
+	IF ifCondition THEN ifStatementList (
+		ELSIF elsifCondition THEN elsifStatementList
+	)* (ELSE elseStatementList)? END_IF;
+
+ifCondition : expression;
+ifStatementList : statementList;
+elsifCondition : expression;
+elsifStatementList : statementList;
+elseStatementList : statementList;
 
 // Case
 caseStatement:

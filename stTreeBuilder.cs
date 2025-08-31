@@ -201,61 +201,164 @@ public class STTreeBuilder : stBaseVisitor<object>
         return varAccess;
     }
 
-    /*
-    // IF-ELSIF-ELSE
-    public override STEntity VisitIfStatement(stParser.IfStatementContext context)
+    public override STFunctionCallStatement VisitFunctionCallStatement(stParser.FunctionCallStatementContext context)
+    {
+        return new STFunctionCallStatement
+        {
+            FunctionCall = VisitFunctionCall(context.functionCall())
+        };
+    }
+
+    // Wyrażenie warunkowe IF-ELSIF-ELSE
+    public override STIf VisitIfStatement(stParser.IfStatementContext context)
     {
         var ifStmt = new STIf
         {
-            Condition = (STExpression)Visit(context.expression()),
-            ThenBranch = BuildStatementList(context.statementList(0))
+            Condition = (STExpression)Visit(context.ifCondition()),
+            ThenBranch = VisitStatementList(context.ifStatementList().statementList())
         };
 
-        // ELSIF-y
-        for (int i = 1; i < context.expression().Length; i++)
+        //ELSIF
+        for (int i = 0; i < context.ELSIF().Length; i++)
         {
-            ifStmt.ElseIfBranches.Add((
-                (STExpression)Visit(context.expression(i)),
-                BuildStatementList(context.statementList(i))
-            ));
+
+            ifStmt.ElseIfBranches.Add(((STExpression)Visit(context.elsifCondition(i).expression()),
+                                        VisitStatementList(context.elsifStatementList(i).statementList())));
         }
 
         // ELSE
         if (context.ELSE() != null)
         {
-            var elseList = context.statementList(context.statementList().Length - 1);
-            ifStmt.ElseBranch = BuildStatementList(elseList);
+            ifStmt.ElseBranch.AddRange(VisitStatementList(context.elseStatementList().statementList()));
         }
 
         return ifStmt;
     }
 
-    // WHILE
-    public override STEntity VisitWhileStatement(stParser.WhileStatementContext context)
+    // Wyrazenie warunkowe CASE
+    public override STCase VisitCaseStatement(stParser.CaseStatementContext context)
+    {
+        var caseStmt = new STCase
+        {
+            Selector = (STExpression)Visit(context.expression())
+        };
+
+        foreach (var selCtx in context.caseSelection())
+        {
+            var selection = (STCaseSelection)Visit(selCtx);
+            caseStmt.Selections.Add(selection);
+        }
+
+        if (context.statementList() != null)
+        {
+            caseStmt.ElseBranch.AddRange(VisitStatementList(context.statementList()));
+        }
+
+        return caseStmt;
+    }
+
+    // etykiety dla CASE
+    public override STCaseSelection VisitCaseSelection(stParser.CaseSelectionContext context)
+    {
+        var selection = new STCaseSelection();
+
+        // Etykiety
+        foreach (var labelCtx in context.caseList().caseListElement())
+        {
+            var label = (STCaseLabel)Visit(labelCtx);
+            selection.Labels.Add(label);
+        }
+
+        // Instrukcje
+        selection.Body.AddRange(VisitStatementList(context.statementList()));
+
+        return selection;
+    }
+
+    public override STCaseLabel VisitCaseListElement(stParser.CaseListElementContext context)
+    {
+        if (context.subrange() != null)
+        {
+            return VisitSubrange(context.subrange());
+        }
+        else
+        {
+            return new STCaseExpressionLabel
+            {
+                Expression = (STExpression)Visit(context.expression())
+            };
+        }
+    }
+
+    public override STCaseRangeLabel VisitSubrange(stParser.SubrangeContext context)
+    {
+        return new STCaseRangeLabel
+        {
+            From = (STExpression)Visit(context.subrangeBegin().expression()),
+            To = (STExpression)Visit(context.subrangeEnd().expression())
+        };
+    }
+
+    // Pętla WHILE
+    public override STWhile VisitWhileStatement(stParser.WhileStatementContext context)
     {
         return new STWhile
         {
             Condition = (STExpression)Visit(context.expression()),
-            Body = BuildStatementList(context.statementList())
+            Body = VisitStatementList(context.statementList())
         };
     }
 
-    // FOR
-    public override STEntity VisitForStatement(stParser.ForStatementContext context)
+    // Pętla FOR
+    public override STFor VisitForStatement(stParser.ForStatementContext context)
     {
         return new STFor
         {
-            Variable = context.controlVariable().GetText(),
+            Iterator = context.controlVariable().GetText(),
             From = (STExpression)Visit(context.forRange().expression(0)),
             To = (STExpression)Visit(context.forRange().expression(1)),
             By = context.forRange().expression().Length > 2
                 ? (STExpression)Visit(context.forRange().expression(2))
                 : null,
-            Body = BuildStatementList(context.statementList())
+            Body = VisitStatementList(context.statementList())
         };
     }
 
-    */
+    // Pętla REPEAT
+    public override STRepeat VisitRepeatStatement(stParser.RepeatStatementContext context)
+    {
+        return new STRepeat
+        {
+            Body = VisitStatementList(context.statementList()),
+            Until = (STExpression)Visit(context.expression())
+        };
+    }
+
+    // EXIT
+    public override STExit VisitExitStatement(stParser.ExitStatementContext context)
+    {
+        return new STExit();
+    }
+
+    // CONTINUE
+    public override STContinue VisitContinueStatement(stParser.ContinueStatementContext context)
+    {
+        return new STContinue();
+    }
+    
+    // SUPER()
+    public override STSuperCall VisitSuperCallStatement(stParser.SuperCallStatementContext context)
+    {
+        return new STSuperCall();
+    }
+
+    // RETURN <wyrażenie>
+    public override STReturn VisitReturnStatement(stParser.ReturnStatementContext context)
+    {
+        return new STReturn();
+    }
+
+
     // WYRAŻENIA //
     // Wyrażenia podstawowe
     public override STExpression VisitPrimaryExpression(stParser.PrimaryExpressionContext context)
@@ -275,7 +378,7 @@ public class STTreeBuilder : stBaseVisitor<object>
         return null;
     }
 
-    // FUNCTION CALL
+    // wywołanie funkcji
     public override STFunctionCall VisitFunctionCall(stParser.FunctionCallContext context)
     {
         var call = new STFunctionCall

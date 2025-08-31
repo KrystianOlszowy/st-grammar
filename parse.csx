@@ -6,7 +6,7 @@
 // Klasy reprezentujące elementy drzewa składniowego oraz ich odwiedzanie
 #load "stEntities.cs"
 #load "stTreeBuilder.cs"
-//#load "stPrinter.cs"
+#load "astPrinter.cs"
 
 #r "nuget: Antlr4.Runtime.Standard, 4.13.0"
 
@@ -41,7 +41,18 @@ if (!File.Exists(filePath))
 // Prosty kod do testów budowy drzewa
 var inputCode = @"
 PROGRAM Main
-        x := 2 + 1 >= 7 AND TRUE;
+    VAR 
+        x : INT;
+    END_VAR
+
+    IF 6 > 8 THEN
+        x := 2 + 1; X:=1;
+    ELSIF true THEN
+        x();
+    ELSE
+        x:=1;
+    END_IF;
+
 END_PROGRAM
 ";
 
@@ -59,8 +70,8 @@ var tree = parser.file();
 var treeBuilder = new STTreeBuilder();
 var file = (STFile)treeBuilder.Visit(tree);
 
-//var printer = new STPrinter();
-//printer.Print(file);
+var printer = new ASTPrinter();
+printer.Print(file);
 
 var dot = ToDot(tree, parser);
 File.WriteAllText("tree.dot", dot);
