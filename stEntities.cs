@@ -122,23 +122,6 @@ public class STQualifiedName : STExpression
 
     public override string ToString() => string.Join(".", Parts);
 }
-
-public class STLiteral : STExpression
-{
-    public object Value { get; set; }
-}
-
-public class STFunctionCall : STExpression
-{
-    public STQualifiedName Target { get; set; }
-    public List<STExpression> Arguments { get; set; } = new();
-}
-
-public class STDereference : STExpression
-{
-    public STExpression Target { get; set; }
-}
-
 public class STUnaryExpression : STExpression
 {
     public string Operator { get; set; } // np. "-", "NOT"
@@ -153,6 +136,13 @@ public class STBinaryExpression : STExpression
 }
 
 
+// Podstawowe wyrażenia //
+
+// Literały
+public class STLiteral : STExpression
+{
+    public object Value { get; set; }
+}
 
 // Dostęp do zmiennej
 public class STVariableAccess : STExpression
@@ -178,4 +168,35 @@ public class STFieldSelector : STVariableSelector
 public class STIndexSelector : STVariableSelector
 {
     public List<STExpression> Indexes { get; set; }
+}
+
+// Wartość enumeracyjna
+public class STEnumValue : STExpression
+{
+    public string TypeName { get; set; }
+    public string ElementName { get; set; }
+}
+
+// Wywołanie funkcji
+public class STFunctionCall : STExpression
+{
+    public string Name { get; set; }
+
+    public List<string> NamespacePath { get; set; } = new();
+
+    public List<STPouParameter> Parameters { get; set; } = new();
+}
+
+public class STPouParameter : STExpression
+{
+    public string Name { get; set; }
+    public bool IsOutput { get; set; }
+    public bool IsNegated { get; set; }
+    public STExpression Value { get; set; }
+}
+
+// Dereferencja
+public class STDereference : STExpression
+{
+    public STExpression Target { get; set; }
 }

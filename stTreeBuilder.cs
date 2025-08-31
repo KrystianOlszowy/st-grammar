@@ -150,6 +150,7 @@ public class STTreeBuilder : stBaseVisitor<object>
         return null;
     }
 
+    // Dostęp do zmiennej symbolicznej
     public override STVariableAccess VisitSymbolicVariable(stParser.SymbolicVariableContext context)
     {
         var varAccess = new STVariableAccess
@@ -254,27 +255,9 @@ public class STTreeBuilder : stBaseVisitor<object>
         };
     }
 
-    // FUNCTION CALL
-    public override STEntity VisitFunctionCall(stParser.FunctionCallContext context)
-    {
-        var call = new STFunctionCall
-        {
-            Function = new STQualifiedName
-            {
-                Parts = new List<string> { context.functionAccess().GetText() }
-            }
-        };
-
-        if (context.parameterAssign() != null)
-        {
-            foreach (var param in context.parameterAssign())
-                call.Arguments.Add((STExpression)Visit(param));
-        }
-
-        return call;
-    }
     */
-    // EXPRESSIONS
+    // WYRAŻENIA //
+    // Wyrażenia podstawowe
     public override STExpression VisitPrimaryExpression(stParser.PrimaryExpressionContext context)
     {
         if (context.literalValue() != null)
@@ -282,10 +265,74 @@ public class STTreeBuilder : stBaseVisitor<object>
 
         if (context.variableValue() != null)
             return VisitVariable(context.variableValue().variable());
-            
+
+        if (context.enumValue() != null)
+            return VisitEnumValue(context.enumValue());
+
+        if (context.referenceValue() != null)
+            return new STLiteral { Value = Visit(context.referenceValue()) };
+        
         return null;
     }
 
+       // FUNCTION CALL
+    public override STFunctionCall VisitFunctionCall(stParser.FunctionCallContext context)
+    {
+        var call = new STFunctionCall
+        {
+            Name = context.functionAccess().functionName().GetText()
+        };
+
+        foreach (var ns in context.functionAccess().namespaceName())
+            call.NamespacePath.Add(ns.GetText());
+
+        if (context.parameterAssign() != null)
+            {
+                foreach (var param in context.parameterAssign())
+                    call.Parameters.Add(VisitParameterAssign(param));
+            }
+
+        return call;
+    }
+
+    public override STPouParameter VisitParameterAssign(stParser.ParameterAssignContext context)
+    {
+        var param = new STPouParameter();
+
+        if (context.variableName() != null)
+            param.Name = context.variableName().GetText();
+
+        if (context.ASSIGN_OUT() != null)
+        {
+            param.IsOutput = true;
+            param.Value = (STExpression)Visit(context.variable());
+        }
+        else
+        {
+            param.IsOutput = false;
+            param.Value = (STExpression)Visit(context.expression());
+
+            if (context.NOT() != null)
+                param.IsNegated = true;
+        }
+        return param;
+    }
+
+    // Literał enumeracyjny
+    public override STEnumValue VisitEnumValue(stParser.EnumValueContext context)
+    {
+        var enumValue = new STEnumValue();
+
+        if (context.enumTypeName() != null)
+            enumValue.TypeName = context.enumTypeName().GetText();
+
+        if (context.enumElementName() != null)
+            enumValue.ElementName = context.enumElementName().GetText();
+
+        return enumValue;
+    }
+
+    // Wyrażenie z operatorem jednoargumentowym
     public override STUnaryExpression VisitUnaryExpression(stParser.UnaryExpressionContext context)
     {
         return new STUnaryExpression
@@ -295,6 +342,7 @@ public class STTreeBuilder : stBaseVisitor<object>
         };
     }
 
+    // Wyrażenia z operatorami 2 arumentowymi
     public override STBinaryExpression VisitAddSubExpression(stParser.AddSubExpressionContext context)
     {
         return new STBinaryExpression

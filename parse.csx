@@ -6,7 +6,7 @@
 // Klasy reprezentujące elementy drzewa składniowego oraz ich odwiedzanie
 #load "stEntities.cs"
 #load "stTreeBuilder.cs"
-#load "stPrinter.cs"
+//#load "stPrinter.cs"
 
 #r "nuget: Antlr4.Runtime.Standard, 4.13.0"
 
@@ -44,7 +44,7 @@ PROGRAM Main
     VAR
          x : INT := 5;
     END_VAR
-        x := x + 1;
+        x := elo.elo.pies(nogi := 4, NOT szybkosc => szybkoscPsa);
 END_PROGRAM
 ";
 
@@ -62,8 +62,8 @@ var tree = parser.file();
 var treeBuilder = new STTreeBuilder();
 var file = (STFile)treeBuilder.Visit(tree);
 
-var printer = new STPrinter();
-printer.Print(file);
+//var printer = new STPrinter();
+//printer.Print(file);
 
 var dot = ToDot(tree, parser);
 File.WriteAllText("tree.dot", dot);

@@ -10418,7 +10418,7 @@ public partial class stParser : Parser {
 		[System.Diagnostics.DebuggerNonUserCode] public FunctionAccessContext functionAccess() {
 			return GetRuleContext<FunctionAccessContext>(0);
 		}
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode LEFT_BRACKET() { return GetToken(stParser.LEFT_BRACKET, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode LEFT_PAREN() { return GetToken(stParser.LEFT_PAREN, 0); }
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode RIGHT_PAREN() { return GetToken(stParser.RIGHT_PAREN, 0); }
 		[System.Diagnostics.DebuggerNonUserCode] public ParameterAssignContext[] parameterAssign() {
 			return GetRuleContexts<ParameterAssignContext>();
@@ -10454,7 +10454,7 @@ public partial class stParser : Parser {
 			State = 1591;
 			functionAccess();
 			State = 1592;
-			Match(LEFT_BRACKET);
+			Match(LEFT_PAREN);
 			State = 1601;
 			ErrorHandler.Sync(this);
 			_la = TokenStream.LA(1);
@@ -14796,7 +14796,7 @@ public partial class stParser : Parser {
 		169,0,1582,295,1,0,0,0,1583,1584,7,9,0,0,1584,297,1,0,0,0,1585,1590,3,
 		300,150,0,1586,1590,3,306,153,0,1587,1590,3,310,155,0,1588,1590,3,312,
 		156,0,1589,1585,1,0,0,0,1589,1586,1,0,0,0,1589,1587,1,0,0,0,1589,1588,
-		1,0,0,0,1590,299,1,0,0,0,1591,1592,3,302,151,0,1592,1601,5,137,0,0,1593,
+		1,0,0,0,1590,299,1,0,0,0,1591,1592,3,302,151,0,1592,1601,5,135,0,0,1593,
 		1598,3,308,154,0,1594,1595,5,139,0,0,1595,1597,3,308,154,0,1596,1594,1,
 		0,0,0,1597,1600,1,0,0,0,1598,1596,1,0,0,0,1598,1599,1,0,0,0,1599,1602,
 		1,0,0,0,1600,1598,1,0,0,0,1601,1593,1,0,0,0,1601,1602,1,0,0,0,1602,1603,

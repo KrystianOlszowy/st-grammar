@@ -509,7 +509,7 @@ subprogControlStatement:
 	| returnStatement;
 
 functionCall:
-	functionAccess LEFT_BRACKET (
+	functionAccess LEFT_PAREN (
 		parameterAssign (COMMA parameterAssign)*
 	)? RIGHT_PAREN;
 
