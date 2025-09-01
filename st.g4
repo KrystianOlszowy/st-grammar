@@ -51,10 +51,8 @@ programDeclaration:
 		| otherVarDeclarations
 		| locatedVarDeclarations
 	)* programBody END_PROGRAM;
-
 programName: IDENTIFIER;
-programNameAccess: (namespaceName DOT)* programName;
-programBody: statementList;
+programBody : statementList;
 
 // User defined data type declaraction
 dataTypeDeclaration: TYPE (typeDeclaration SEMICOLON)+ END_TYPE;
@@ -75,7 +73,7 @@ simpleTypeName: IDENTIFIER;
 simpleSpecificationInit:
 	simpleSpecification (ASSIGN simpleInit)?;
 simpleInit: expression;
-simpleSpecification: elementaryTypeName | simpleTypeAccess;
+simpleSpecification: elementaryTypeName | derivedTypeAccess;
 
 elementaryTypeName:
 	intTypeName
@@ -87,8 +85,6 @@ elementaryTypeName:
 	| timeOfDayTypeName
 	| dateAndTimeTypeName
 	| durationTypeName;
-
-simpleTypeAccess: (namespaceName DOT)* simpleTypeName;
 
 stringTypeName: (STRING | WSTRING) (
 		LEFT_BRACKET stringSize RIGHT_BRACKET
@@ -106,10 +102,9 @@ subrangeSpecificationInit:
 	subrangeSpecification (ASSIGN subrangeInit)?;
 subrangeSpecification:
 	intTypeName LEFT_PAREN subrange RIGHT_PAREN
-	| subrangeTypeAccess;
+	| derivedTypeAccess;
 subrangeInit: signOperator? UNSIGNED_INT;
 
-subrangeTypeAccess: (namespaceName DOT)* subrangeTypeName;
 subrange: subrangeBegin RANGE subrangeEnd;
 subrangeBegin: expression;
 subrangeEnd: expression;
@@ -136,9 +131,8 @@ enumValue: (enumTypeName HASH)? enumElementName;
 
 enumSpecificationInit: (
 		LEFT_PAREN enumElementName (COMMA enumElementName)* RIGHT_PAREN
-		| enumTypeAccess
+		| derivedTypeAccess
 	) (ASSIGN enumValue)?;
-enumTypeAccess: ( namespaceName DOT)* enumTypeName;
 
 // Array type declaration
 arrayTypeDeclaration:
@@ -146,9 +140,8 @@ arrayTypeDeclaration:
 arrayTypeName: IDENTIFIER;
 arraySpecificationInit: arraySpecification (ASSIGN arrayInit)?;
 arraySpecification:
-	arrayTypeAccess
+	derivedTypeAccess
 	| ARRAY LEFT_BRACKET subrange (COMMA subrange)* RIGHT_BRACKET OF dataTypeAccess;
-arrayTypeAccess: (namespaceName DOT)* arrayTypeName;
 
 arrayInit:
 	LEFT_BRACKET arrayElementInit (COMMA arrayElementInit)* RIGHT_BRACKET;
@@ -200,8 +193,7 @@ multibitPartAccess: DOT (UNSIGNED_INT | RELATIVE_ADDRESS);
 
 structSpecificationInit:
 	structSpecification (ASSIGN structInit)?;
-structSpecification: structTypeAccess;
-structTypeAccess: (namespaceName DOT)* structTypeName;
+structSpecification: derivedTypeAccess;
 structInit:
 	LEFT_PAREN structElementInit (COMMA structElementInit)* RIGHT_PAREN;
 structElementInit:
@@ -222,7 +214,6 @@ stringTypeDeclaration:
 		ASSIGN charString
 	)?;
 stringDerivedTypeName: IDENTIFIER;
-stringTypeAccess: (namespaceName DOT)* stringDerivedTypeName;
 
 // Reference type declaration
 referenceTypeDeclaration:
@@ -241,14 +232,13 @@ referenceAddress:
 		| classInstanceName
 	) RIGHT_PAREN;
 
-referenceTypeAccess: (namespaceName DOT)* referenceTypeName;
 referenceName: IDENTIFIER;
 dereference: referenceName CARET+;
 
 // Funtion Block type declaration
 functionBlockDeclaration:
 	FUNCTION_BLOCK (FINAL | ABSTRACT)? functionBlockName usingDirective* (
-		EXTENDS (functionBlockTypeAccess | classTypeAccess)
+		EXTENDS derivedTypeAccess
 	)? (IMPLEMENTS interfaceTypeList)? (
 		ioVarDeclarations
 		| externalVarDeclarations
@@ -260,14 +250,12 @@ functionBlockDeclaration:
 functionBlockName: IDENTIFIER;
 functionBlockInstanceName: (namespaceName DOT)* functionBlockName CARET*;
 
-functionBlockTypeAccess: (namespaceName DOT)* functionBlockTypeName;
-functionBlockTypeName: IDENTIFIER;
 functionBlockBody: statementList;
 
 functionBlockVarDeclarationInit:
 	variableList COLON functionBlockVarSpecificationInit;
 functionBlockVarSpecificationInit:
-	functionBlockTypeAccess (ASSIGN structInit)?;
+	derivedTypeAccess (ASSIGN structInit)?;
 
 // Method declaration
 methodDeclaration:
@@ -284,16 +272,8 @@ methodName: IDENTIFIER;
 // Type accessing
 dataTypeAccess: elementaryTypeName | derivedTypeAccess;
 
-derivedTypeAccess:
-	simpleTypeAccess
-	| subrangeTypeAccess
-	| enumTypeAccess
-	| arrayTypeAccess
-	| structTypeAccess
-	| stringTypeAccess
-	| classTypeAccess
-	| referenceTypeAccess
-	| interfaceTypeAccess;
+derivedTypeAccess: (namespaceName DOT)* derivedTypeName;
+derivedTypeName : IDENTIFIER;
 
 // Variable access
 variable: directVariable | symbolicVariable;
@@ -381,7 +361,6 @@ locatedPartlyVar:
 varSpecification:
 	simpleSpecification
 	| arraySpecification
-	| structTypeAccess
 	| stringSpecification;
 
 // Fully located variable declaration
@@ -403,9 +382,6 @@ externalDeclaration:
 	globalVarName COLON (
 		simpleSpecification
 		| arraySpecification
-		| structTypeAccess
-		| functionBlockTypeAccess
-		| referenceTypeAccess
 	);
 
 // Global variables
@@ -417,7 +393,6 @@ globalVarDeclarations:
 globalVarDeclaration:
 	globalVarSpecification COLON (
 		locatedVarSpecificationInit
-		| functionBlockTypeAccess
 	);
 
 globalVarSpecification:
@@ -452,14 +427,13 @@ functionBody: statementList;
 // Class declaration
 classDeclaration:
 	CLASS (FINAL | ABSTRACT)? classTypeName usingDirective* (
-		EXTENDS classTypeAccess
+		EXTENDS derivedTypeAccess
 	)? (IMPLEMENTS interfaceTypeList)? (
 		externalVarDeclarations
 		| normalVarDeclarations
 		| otherVarDeclarations
 	)* (methodDeclaration)* END_CLASS;
 classTypeName: IDENTIFIER;
-classTypeAccess: (namespaceName DOT)* classTypeName;
 
 className: IDENTIFIER;
 classInstanceName: (namespaceName DOT)* className CARET*;
@@ -474,8 +448,7 @@ interfaceDeclaration:
 
 interfaceName: IDENTIFIER;
 interfaceTypeList:
-	interfaceTypeAccess (COLON interfaceTypeAccess)*;
-interfaceTypeAccess: (namespaceName DOT)* interfaceName;
+	derivedTypeAccess(COLON derivedTypeAccess)*;
 
 methodPrototype:
 	METHOD methodName (COLON dataTypeAccess)? ioVarDeclarations* END_METHOD;
@@ -483,7 +456,7 @@ methodPrototype:
 interfaceVarDeclarationInit:
 	variableList COLON interfaceSpecificationInit;
 interfaceSpecificationInit:
-	interfaceTypeAccess (ASSIGN interfaceValue)?;
+	derivedTypeAccess (ASSIGN interfaceValue)?;
 interfaceValue:
 	symbolicVariable
 	| functionBlockInstanceName

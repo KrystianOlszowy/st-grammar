@@ -52,7 +52,10 @@ public class STTreeBuilder : stBaseVisitor<object>
 
     public override List<STStatement> VisitProgramBody(stParser.ProgramBodyContext context)
     {
-        return VisitStatementList(context.statementList());
+        if (context.statementList() != null)
+            return VisitStatementList(context.statementList());
+        else
+            return new List<STStatement>();
     }
 
     // ZMIENNE 
@@ -72,17 +75,53 @@ public class STTreeBuilder : stBaseVisitor<object>
     {
         var variables = new List<STVariable>();
 
+        if (context.variableList() != null)
+        {
+            foreach (string variableName in VisitVariableList(context.variableList()))
+            {
+                // Obsługa inicjalizacji zmiennej
+                if (context.simpleSpecificationInit().simpleInit() != null)
+                {
+
+                    variables.Add(new STVariable
+                    {
+                        Name = variableName,
+                        Type = new STNamedType { Name = context.simpleSpecificationInit().simpleSpecification().GetText() },
+                        InitialValue = (STExpression)Visit(context.simpleSpecificationInit().simpleInit().expression())
+                    });
+                }
+                else // Deklaracja bez inicjalizacji
+                {
+                    variables.Add(new STVariable
+                    {
+                        Name = variableName,
+                        Type = new STNamedType { Name = context.simpleSpecificationInit().simpleSpecification().GetText() }
+                    });
+                }
+            }
+        }
+        else if (context.arrayVarDeclarationInit() != null)
+        {
+            variables.AddRange(VisitArrayVarDeclarationInit(context.arrayVarDeclarationInit()));
+        }
+        
+        return variables;
+    }
+
+    // Deklaracja zmiennych tablicowych
+    public override List<STVariable> VisitArrayVarDeclarationInit(stParser.ArrayVarDeclarationInitContext context)
+    {
+        var variables = new List<STVariable>();
+
         foreach (string variableName in VisitVariableList(context.variableList()))
         {
-            // Obsługa inicjalizacji zmiennej
-            if (context.simpleSpecificationInit().simpleInit() != null)
+            if (context.arraySpecificationInit().arrayInit() != null)
             {
-
-                variables.Add(new STVariable
+                variables.Add(new STArrayVariable
                 {
                     Name = variableName,
-                    Type = context.simpleSpecificationInit().simpleSpecification().GetText(),
-                    InitialValue = (STExpression)Visit(context.simpleSpecificationInit().simpleInit().expression())
+                    Type = VisitArraySpecification(context.arraySpecificationInit().arraySpecification()),
+                    InitialValue = (STExpression)Visit(context.arraySpecificationInit().arrayInit())
                 });
             }
             else // Deklaracja bez inicjalizacji
@@ -90,11 +129,54 @@ public class STTreeBuilder : stBaseVisitor<object>
                 variables.Add(new STVariable
                 {
                     Name = variableName,
-                    Type = context.simpleSpecificationInit().simpleSpecification().GetText()
+                    Type = VisitArraySpecification(context.arraySpecificationInit().arraySpecification())
                 });
             }
         }
+
         return variables;
+    }
+
+    // Określenie typu tablicy
+    public override STType VisitArraySpecification(stParser.ArraySpecificationContext context)
+    {
+        if (context.subrange() != null)
+        {
+            var arrayType = new STArrayType
+            {
+                ElementType = VisitDataTypeAccess(context.dataTypeAccess())
+            };
+
+            foreach (var subrange in context.subrange())
+            {
+                arrayType.Dimensions.Add(VisitSubrange(subrange));
+            }
+            return arrayType;
+        }
+        else
+        {
+            return VisitDerivedTypeAccess(context.derivedTypeAccess());
+        }
+    }
+
+    public override STType VisitDataTypeAccess(stParser.DataTypeAccessContext context)
+    {
+
+        if (context.elementaryTypeName() != null)
+            return new STNamedType { Name = context.elementaryTypeName().GetText() };
+        else
+            return VisitDerivedTypeAccess(context.derivedTypeAccess());
+    }
+
+    // Dostęp do zmiennej tworzonej przez użytkownika lub biblioteki
+    public override STNamedType VisitDerivedTypeAccess(stParser.DerivedTypeAccessContext context)
+    {
+        var namedType = new STNamedType { Name = context.derivedTypeName().GetText() };
+
+        foreach (var ns in context.namespaceName())
+            namedType.NamespacePath.Add(ns.GetText());
+
+        return namedType;
     }
 
     // Lista zmiennych przy tworzeniu zmiennych np. VAR x, y, z : INT;
@@ -265,7 +347,7 @@ public class STTreeBuilder : stBaseVisitor<object>
         // Etykiety
         foreach (var labelCtx in context.caseList().caseListElement())
         {
-            var label = (STCaseLabel)Visit(labelCtx);
+            var label = (STExpression)Visit(labelCtx);
             selection.Labels.Add(label);
         }
 
@@ -275,7 +357,7 @@ public class STTreeBuilder : stBaseVisitor<object>
         return selection;
     }
 
-    public override STCaseLabel VisitCaseListElement(stParser.CaseListElementContext context)
+    public override STExpression VisitCaseListElement(stParser.CaseListElementContext context)
     {
         if (context.subrange() != null)
         {
@@ -283,16 +365,13 @@ public class STTreeBuilder : stBaseVisitor<object>
         }
         else
         {
-            return new STCaseExpressionLabel
-            {
-                Expression = (STExpression)Visit(context.expression())
-            };
+            return (STExpression)Visit(context.expression());
         }
     }
 
-    public override STCaseRangeLabel VisitSubrange(stParser.SubrangeContext context)
+    public override STSubrange VisitSubrange(stParser.SubrangeContext context)
     {
-        return new STCaseRangeLabel
+        return new STSubrange
         {
             From = (STExpression)Visit(context.subrangeBegin().expression()),
             To = (STExpression)Visit(context.subrangeEnd().expression())

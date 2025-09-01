@@ -28,7 +28,7 @@ public abstract class STPou : STDeclaration
 
 public class STVariable : STDeclaration
 {
-    public string Type { get; set; }
+    public STType Type { get; set; }
 
     public STExpression InitialValue { get; set; }
 }
@@ -37,6 +37,43 @@ public class STProgram : STPou { }
 public class STFunction : STPou { }
 public class STFunctionBlock : STPou { }
 
+// Deklaracje tablic
+public class STArrayVariable : STVariable
+{
+    public STArrayType ArrayType { get; set; }
+    public STArrayInitializer Initializer { get; set; }
+}
+
+public class STArrayType : STType
+{
+    public List<STSubrange> Dimensions { get; set; } = new();
+    public STType ElementType { get; set; }
+}
+
+public abstract class STType : STEntity { }
+
+public class STNamedType : STType
+{
+    public string Name { get; set; }
+
+    public List<string> NamespacePath { get; set; }
+}
+
+public class STSubrange : STExpression
+{
+    public STExpression From { get; set; }
+    public STExpression To { get; set; }
+}
+
+public class STArrayInitializer : STEntity
+{
+    public List<STExpression> Values { get; set; } = new();
+}
+
+public class STStructInit : STExpression
+{
+    public Dictionary<string, STExpression> Fields { get; set; } = new();
+}
 
 // INSTRUKCJE
 public abstract class STStatement : STEntity { }
@@ -80,22 +117,8 @@ public class STCase : STStatement
 
 public class STCaseSelection : STEntity
 {
-    public List<STCaseLabel> Labels { get; set; } = new();
+    public List<STExpression> Labels { get; set; } = new();
     public List<STStatement> Body { get; set; } = new();
-}
-
-// etykiety dla CASE
-public abstract class STCaseLabel : STEntity { }
-
-public class STCaseExpressionLabel : STCaseLabel
-{
-    public STExpression Expression { get; set; }
-}
-
-public class STCaseRangeLabel : STCaseLabel
-{
-    public STExpression From { get; set; }
-    public STExpression To { get; set; }
 }
 
 public class STFor : STStatement
