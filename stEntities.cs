@@ -1,24 +1,12 @@
-
+// Abstrakcyjne klasy kategoryzujące elementy drzewa składniowego //
 public abstract class STEntity { }
 
-// CAŁY PLIK
-public class STFile : STEntity
-{
-    public List<STDeclaration> Declarations { get; set; } = new();
-}
+public abstract class STType : STEntity { }
 
-// DEKLARACJE
 public abstract class STDeclaration : STEntity
 {
     public string Name { get; set; }
 }
-
-
-public class STNamespace : STDeclaration
-{
-    public List<STDeclaration> Members { get; set; } = new();
-}
-
 
 public abstract class STPou : STDeclaration
 {
@@ -26,16 +14,75 @@ public abstract class STPou : STDeclaration
     public List<STStatement> Body { get; set; } = new();
 }
 
+// Cały plik //
+public class STFile : STEntity
+{
+    public List<STDeclaration> Declarations { get; set; } = new();
+}
+
+// DEKLARACJE //
+public class STNamespace : STDeclaration
+{
+    public List<STDeclaration> Members { get; set; } = new();
+}
+
+// Deklracje POU
+public class STProgram : STPou { }
+public class STFunction : STPou { }
+public class STFunctionBlock : STPou { }
+
+// Deklaracje typów użytkownika
+public abstract class STTypeDeclaration : STDeclaration { }
+
+// Deklaracje struktur
+public class STStructTypeDeclaration : STTypeDeclaration
+{
+    public STStructVariable DerivedStruct { get; set; } = null;
+
+    public List<STStructField> Fields { get; set; } = new();
+
+    public bool Overlap { get; set; }
+}
+
+public class STStructField : STEntity
+{
+    public string Name { get; set; }
+    public STType FieldType { get; set; }
+    public STExpression InitialValue { get; set; }
+    public string Address { get; set; }
+}
+
+// Deklaracje zmiennych
 public class STVariable : STDeclaration
 {
     public STType Type { get; set; }
 
     public STExpression InitialValue { get; set; }
+
+    public bool IsConstant { get; set; }
+    public bool IsInput { get; set; }
+    public bool IsOutput { get; set; }
+
+    public bool IsInputOutput { get; set; }
+
+    public bool IsRetain { get; set; }
+
+    public bool AccessType { get; set; }
+
+    public bool IsTemporary { get; set; }
+
+    public bool IsExternal { get; set; }
+
+    public string Address { get; set; }
+    public string RelativeAddress { get; set; }
 }
 
-public class STProgram : STPou { }
-public class STFunction : STPou { }
-public class STFunctionBlock : STPou { }
+public class STStructVariable : STVariable
+{
+    public STNamedType StructTypeName { get; set; }
+    public new STStructInit InitialValue { get; set; }
+}
+
 
 // Deklaracje tablic
 public class STArrayVariable : STVariable
@@ -50,13 +97,18 @@ public class STArrayType : STType
     public STType ElementType { get; set; }
 }
 
-public abstract class STType : STEntity { }
 
 public class STNamedType : STType
 {
     public string Name { get; set; }
 
-    public List<string> NamespacePath { get; set; }
+    public List<string> NamespacePath { get; set; } = new();
+}
+
+public class STStringType : STType
+{
+    public STNamedType StringType { get; set; }
+    public STExpression Length { get; set; }    
 }
 
 public class STSubrange : STExpression
@@ -65,7 +117,7 @@ public class STSubrange : STExpression
     public STExpression To { get; set; }
 }
 
-public class STArrayInitializer : STEntity
+public class STArrayInitializer : STExpression
 {
     public List<STExpression> Values { get; set; } = new();
 }

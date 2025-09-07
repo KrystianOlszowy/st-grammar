@@ -349,6 +349,7 @@ nonRetainVarDeclarations:
 	VAR NON_RETAIN accessSpecification? (
 		varDeclarationInit SEMICOLON
 	)* END_VAR;
+	
 retainVarDeclarations:
 	VAR RETAIN accessSpecification? (
 		varDeclarationInit SEMICOLON

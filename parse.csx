@@ -40,12 +40,12 @@ if (!File.Exists(filePath))
 
 // Prosty kod do testów budowy drzewa
 var inputCode = @"
-PROGRAM Main
-    VAR 
-        x : ARRAY[1..2, 3..4] OF INT := [[1, 2], [3, 4]];
+FUNCTION mojaFunkcja : BOOL
+    VAR_INPUT
+        x : ARRAY[1..2, 3..4] OF REAL;
     END_VAR
-
-END_PROGRAM
+    RETURN;
+END_FUNCTION
 ";
 
 // Parsowanie
@@ -60,7 +60,7 @@ var tree = parser.file();
 
 //Budowa drzewa składniowego
 var treeBuilder = new STTreeBuilder();
-var file = (STFile)treeBuilder.Visit(tree);
+//var file = (STFile)treeBuilder.Visit(tree);
 
 //var printer = new ASTPrinter();
 //printer.Print(file);

@@ -4,7 +4,7 @@ using Antlr4.Runtime.Tree;
 
 public class STTreeBuilder : stBaseVisitor<object>
 {
-    // CAŁY PLIK //
+    // Cały plik //
     public override STFile VisitFile(stParser.FileContext context)
     {
         var file = new STFile
@@ -50,12 +50,510 @@ public class STTreeBuilder : stBaseVisitor<object>
         return program;
     }
 
+    // Deklaracje zmiennych wejścia/wyjścia
+    public override List<STVariable> VisitIoVarDeclarations(stParser.IoVarDeclarationsContext context)
+    {
+        if (context.inputVarDeclarations() == null)
+            return VisitInputVarDeclarations(context.inputVarDeclarations());
+
+        if (context.outputVarDeclarations() == null)
+            return VisitOutputVarDeclarations(context.outputVarDeclarations());
+
+        if (context.inOutVarDeclarations() == null)
+            return VisitInOutVarDeclarations(context.inOutVarDeclarations());
+
+        return null;
+    }
+
+    // Deklaracje zmiennych wejścia
+    public override List<STVariable> VisitInputVarDeclarations(stParser.InputVarDeclarationsContext context)
+    {
+        var variables = new List<STVariable>();
+        foreach (var inputVarDecl in context.inputVarDeclaration())
+        {
+            if (VisitInputVarDeclaration(inputVarDecl) is List<STVariable> inputVarDecls)
+            {
+                foreach (var var in inputVarDecls)
+                {
+                    var.IsInput = true;
+
+                    if (context.RETAIN() != null)
+                        var.IsRetain = true;
+
+                    variables.Add(var);
+                }
+            }
+        }
+        return variables;
+    }
+
+    public override List<STVariable> VisitInputVarDeclaration(stParser.InputVarDeclarationContext context)
+    {
+        if (context.varDeclarationInit() != null)
+        {
+            return VisitVarDeclarationInit(context.varDeclarationInit());
+        }
+        else if (context.edgeDeclaration() != null)
+        {
+            return VisitEdgeDeclaration(context.edgeDeclaration());
+        }
+        else if (context.arrayConformDeclaration() != null)
+        {
+            return VisitArrayConformDeclaration(context.arrayConformDeclaration());
+        }
+        else
+        {
+            return null;
+        }
+    }
+
+    // Deklaracje zmiennych wyjścia
+    public override List<STVariable> VisitOutputVarDeclarations(stParser.OutputVarDeclarationsContext context)
+    {
+        var variables = new List<STVariable>();
+        foreach (var outputVarDecl in context.outputVarDeclaration())
+        {
+            if (VisitOutputVarDeclaration(outputVarDecl) is List<STVariable> outputVarDecls)
+            {
+                foreach (var var in outputVarDecls)
+                {
+                    var.IsOutput = true;
+                    variables.Add(var);
+                }
+            }
+        }
+
+        if (context.RETAIN() != null)
+            foreach (var var in variables)
+                var.IsRetain = true;
+
+        return variables;
+    }
+
+    public override List<STVariable> VisitOutputVarDeclaration(stParser.OutputVarDeclarationContext context)
+    {
+        if (context.varDeclarationInit() != null)
+        {
+            return VisitVarDeclarationInit(context.varDeclarationInit());
+        }
+        else if (context.arrayConformDeclaration() != null)
+        {
+            return VisitArrayConformDeclaration(context.arrayConformDeclaration());
+        }
+        else
+        {
+            return null;
+        }
+    }
+
+    // Deklaracje zmiennych wejścia/wyjścia
+    public override List<STVariable> VisitInOutVarDeclarations(stParser.InOutVarDeclarationsContext context)
+    {
+        var variables = new List<STVariable>();
+        foreach (var inOutVarDecl in context.inOutVarDeclaration())
+        {
+            if (VisitInOutVarDeclaration(inOutVarDecl) is List<STVariable> inOutVarDecls)
+            {
+                foreach (var var in inOutVarDecls)
+                {
+                    var.IsInputOutput = true;
+                    variables.Add(var);
+                }
+            }
+        }
+        return variables;
+    }
+
+    public override List<STVariable> VisitInOutVarDeclaration(stParser.InOutVarDeclarationContext context)
+    {
+        if (context.varDeclarationInit() != null)
+        {
+            return VisitVarDeclarationInit(context.varDeclarationInit());
+        }
+        else if (context.arrayConformDeclaration() != null)
+        {
+            return VisitArrayConformDeclaration(context.arrayConformDeclaration());
+        }
+        else
+        {
+            return null;
+        }
+    }
+
+    // Deklaracje zmiennych tymczasowych
+    public override List<STVariable> VisitTempVarDeclarations(stParser.TempVarDeclarationsContext context)
+    {
+        var variables = new List<STVariable>();
+        foreach (var decl in context.varDeclarationInit())
+        {
+            if (VisitVarDeclarationInit(decl) is List<STVariable> tempVarDecls)
+            {
+                foreach (var var in tempVarDecls)
+                {
+                    var.IsTemporary = true;
+                    variables.Add(var);
+                }
+            }
+        }
+        return variables;
+    }
+
+    // Deklaracje zmiennych zewnętrznych
+    public override List<STVariable> VisitExternalVarDeclarations(stParser.ExternalVarDeclarationsContext context)
+    {
+        var variables = new List<STVariable>();
+        foreach (var externalDecl in context.externalDeclaration())
+        {
+            if (VisitExternalDeclaration(externalDecl) is STVariable var)
+            {
+                var.IsExternal = true;
+                if (context.CONSTANT() != null)
+                {
+                    var.IsConstant = true;
+                }
+                variables.Add(var);
+            }
+        }
+        return variables;
+    }
+
+    public override STVariable VisitExternalDeclaration(stParser.ExternalDeclarationContext context)
+    {
+        var externalVar = new STVariable { Name = context.globalVarName().GetText() };
+        if (context.simpleSpecification() != null)
+        {
+            externalVar.Type = VisitSimpleSpecification(context.simpleSpecification());
+        }
+        else if (context.arraySpecification() != null)
+        {
+            externalVar.Type = VisitArraySpecification(context.arraySpecification());
+        }
+
+        return externalVar;
+    }
+
+    // Deklaracje 
+    public override List<STVariable> VisitLocatedVarDeclarations(stParser.LocatedVarDeclarationsContext context)
+    {
+        var variables = new List<STVariable>();
+
+        foreach (var varDecl in context.locatedVarDeclaration())
+        {
+            var locatedVar = new STVariable();
+
+            if (varDecl.locatedVarSpecificationInit() != null)
+            {
+                locatedVar = VisitLocatedVarSpecificationInit(varDecl.locatedVarSpecificationInit());
+            }
+
+            if (varDecl.variableName() != null)
+            {
+                locatedVar.Name = varDecl.variableName().GetText();
+            }
+
+            if (context.CONSTANT() != null)
+                locatedVar.IsConstant = true;
+
+            if (context.RETAIN() != null)
+                locatedVar.IsRetain = true;
+
+            locatedVar.Address = VisitLocatedAt(varDecl.locatedAt());
+
+            variables.Add(locatedVar);
+        }
+
+        return variables;
+    }
+
+    public override STVariable VisitLocatedVarSpecificationInit(stParser.LocatedVarSpecificationInitContext context)
+    {
+        var locatedVar = new STVariable();
+        if (context.simpleSpecificationInit() != null)
+        {
+            locatedVar = VisitSimpleSpecificationInit(context.simpleSpecificationInit());
+        }
+        else if (context.arraySpecificationInit() != null)
+        {
+            locatedVar = VisitArraySpecificationInit(context.arraySpecificationInit());
+        }
+        return locatedVar;
+    }
+
+    public override STVariable VisitArraySpecificationInit(stParser.ArraySpecificationInitContext context)
+    {
+        var variable = new STVariable
+        {
+            Type = VisitArraySpecification(context.arraySpecification())
+        };
+
+        if (context.arrayInit() != null)
+            variable.InitialValue = (STExpression)Visit(context.arrayInit());
+
+
+        return variable;
+    }
+
+    public override string VisitLocatedAt(stParser.LocatedAtContext context)
+    {
+        return context.relativeAddress() != null ? context.relativeAddress().GetText() : context.partlySpecifiedAddress().GetText();
+    }
+
+
+    // Deklaracje pozostałych zmiennych
+    public override List<STVariable> VisitOtherVarDeclarations(stParser.OtherVarDeclarationsContext context)
+    {
+        if (context.retainVarDeclarations() != null)
+        {
+            return VisitRetainVarDeclarations(context.retainVarDeclarations());
+        }
+        else if (context.locatedPartlyVarDeclaration() != null)
+        {
+            return VisitLocatedPartlyVarDeclaration(context.locatedPartlyVarDeclaration());
+        }
+        else
+        {
+            return null;
+        }
+    }
+
+    public override List<STVariable> VisitRetainVarDeclarations(stParser.RetainVarDeclarationsContext context)
+    {
+        var variables = new List<STVariable>();
+        foreach (var retainVarDecl in context.varDeclarationInit())
+        {
+            if (VisitVarDeclarationInit(retainVarDecl) is List<STVariable> retainVarDecls)
+            {
+                foreach (var var in retainVarDecls)
+                {
+                    var.IsRetain = true;
+                    variables.Add(var);
+                }
+            }
+        }
+        return variables;
+    }
+
+    public override List<STVariable> VisitLocatedPartlyVarDeclaration(stParser.LocatedPartlyVarDeclarationContext context)
+    {
+        var variables = new List<STVariable>();
+        foreach (var locatedPartlyVarDecl in context.locatedPartlyVar())
+        {
+            var var = VisitLocatedPartlyVar(locatedPartlyVarDecl);
+
+            if (context.RETAIN != null)
+            {
+                var.IsRetain = true;
+            }
+            variables.Add(var);
+        }
+        return variables;
+    }
+
+    public override STVariable VisitLocatedPartlyVar(stParser.LocatedPartlyVarContext context)
+    {
+        var locatedPartlyVar = new STVariable { Name = context.variableName().GetText() };
+
+        if (context.varSpecification().simpleSpecification() != null)
+        {
+            locatedPartlyVar.Type = VisitSimpleSpecification(context.varSpecification().simpleSpecification());
+        }
+        else if (context.varSpecification().arraySpecification() != null)
+        {
+            locatedPartlyVar.Type = VisitArraySpecification(context.varSpecification().arraySpecification());
+        }
+        else if (context.varSpecification().stringSpecification() != null)
+        {
+            locatedPartlyVar.Type = VisitStringSpecification(context.varSpecification().stringSpecification());
+        }
+
+        locatedPartlyVar.RelativeAddress = context.RELATIVE_ADDRESS().GetText();
+
+        return locatedPartlyVar;
+    }
+
+    public override STStringType VisitStringSpecification(stParser.StringSpecificationContext context)
+    {
+        var stringType = new STStringType();
+        stringType.Length = new STLiteral() { Value = context.stringSize().GetText() };
+        return stringType;
+    }
+
+    public override List<STVariable> VisitEdgeDeclaration(stParser.EdgeDeclarationContext context)
+    {
+        var edgeVarDecls = new List<STVariable>();
+
+        foreach (var variableName in VisitVariableList(context.variableList()))
+        {
+            var edgeVarDecl = new STVariable { Name = variableName };
+
+            if (context.R_EDGE() != null)
+                edgeVarDecl.Type = new STNamedType { Name = "BOOL R_EDGE" };
+            else if (context.F_EDGE() != null)
+                edgeVarDecl.Type = new STNamedType { Name = "BOOL F_EDGE" };
+
+            edgeVarDecls.Add(edgeVarDecl);
+        }
+        return edgeVarDecls;
+    }
+
+    public override List<STVariable> VisitArrayConformDeclaration(stParser.ArrayConformDeclarationContext context)
+    {
+        var arrayConformVarDecls = new List<STVariable>();
+
+        foreach (var variableName in VisitVariableList(context.variableList()))
+        {
+            var arrayConformVarDecl = new STVariable { Name = variableName };
+            var arrayType = new STArrayType() { ElementType = VisitDataTypeAccess(context.arrayConformand().dataTypeAccess()) };
+
+            foreach (var dimension in context.arrayConformand().ASTERISK())
+            {
+                arrayType.Dimensions.Add(new STSubrange());
+            }
+            arrayConformVarDecls.Add(arrayConformVarDecl);
+        }
+        return arrayConformVarDecls;
+    }
+
     public override List<STStatement> VisitProgramBody(stParser.ProgramBodyContext context)
     {
         if (context.statementList() != null)
             return VisitStatementList(context.statementList());
         else
             return new List<STStatement>();
+    }
+
+    // Deklaracje typów użytkownika
+    public override List<STTypeDeclaration> VisitDataTypeDeclaration(stParser.DataTypeDeclarationContext context)
+    {
+        var decls = new List<STTypeDeclaration>();
+
+        foreach (var typeDecl in context.typeDeclaration())
+        {
+            if (Visit(typeDecl) is STTypeDeclaration td)
+                decls.Add(td);
+        }
+
+        return decls;
+    }
+
+    // Deklaracje struktur
+    public override STStructTypeDeclaration VisitStructTypeDeclaration(stParser.StructTypeDeclarationContext context)
+    {
+
+        if (context.structTypeSpecification().structDeclaration() != null)
+        {
+            var decl = VisitStructDeclaration(context.structTypeSpecification().structDeclaration());
+            decl.Name = context.structTypeName().GetText();
+            return decl;
+        }
+
+        if (context.structTypeSpecification().structSpecificationInit() != null)
+        {
+            var decl = new STStructTypeDeclaration
+            {
+                DerivedStruct = VisitStructSpecificationInit(context.structTypeSpecification().structSpecificationInit()),
+                Name = context.structTypeName().GetText(),
+            };
+            return decl;
+        }
+
+        return null;
+    }
+
+    public override STStructTypeDeclaration VisitStructDeclaration(stParser.StructDeclarationContext context)
+    {
+        var declSpec = new STStructTypeDeclaration
+        {
+            Overlap = context.OVERLAP() != null
+        };
+
+        foreach (var elemDeclaration in context.structElementDeclaration())
+            declSpec.Fields.Add(VisitStructElementDeclaration(elemDeclaration));
+
+        return declSpec;
+    }
+
+    public override STStructField VisitStructElementDeclaration(stParser.StructElementDeclarationContext context)
+    {
+        var field = new STStructField
+        {
+            Name = context.structElementName().GetText()
+        };
+
+        // Addresowanie w strukturze
+        if (context.locatedAt() != null)
+        {
+            if (context.locatedAt().relativeAddress() != null)
+                field.Address = context.locatedAt().relativeAddress().GetText();
+            else
+                field.Address = context.locatedAt().partlySpecifiedAddress().GetText();
+
+            if (context.multibitPartAccess() != null)
+                field.Address += context.multibitPartAccess().GetText();
+        }
+
+        // Proste elementy struktury
+        if (context.simpleSpecificationInit() != null)
+        {
+            field.FieldType = new STNamedType
+            {
+                Name = context.simpleSpecificationInit().simpleSpecification().GetText()
+            };
+
+            if (context.simpleSpecificationInit().simpleInit() != null)
+                field.InitialValue = (STExpression)Visit(context.simpleSpecificationInit().simpleInit().expression());
+        }
+        else if (context.arraySpecificationInit() != null)
+        {
+            field.FieldType = VisitArraySpecification(context.arraySpecificationInit().arraySpecification());
+            if (context.arraySpecificationInit().arrayInit() != null)
+                field.InitialValue = (STExpression)Visit(context.arraySpecificationInit().arrayInit());
+        }
+        // Element struktury jest inną strukturą
+        else if (context.structSpecificationInit() != null)
+        {
+            var spec = VisitStructSpecificationInit(context.structSpecificationInit());
+            field.FieldType = spec.StructTypeName;
+            field.InitialValue = spec.InitialValue;
+        }
+        // analogicznie: subrangeSpecificationInit, enumSpecificationInit
+
+        return field;
+    }
+
+    public override STStructVariable VisitStructSpecificationInit(stParser.StructSpecificationInitContext context)
+    {
+        var structVariable = new STStructVariable
+        {
+            StructTypeName = VisitDerivedTypeAccess(context.structSpecification().derivedTypeAccess())
+        };
+
+        if (context.structInit() != null)
+            structVariable.InitialValue = VisitStructInit(context.structInit());
+
+        return structVariable;
+    }
+
+    public override STStructInit VisitStructInit(stParser.StructInitContext context)
+    {
+        var init = new STStructInit();
+
+        foreach (var elem in context.structElementInit())
+        {
+            var name = elem.structElementName().GetText();
+
+            if (elem.expression() != null)
+                init.Fields[name] = (STExpression)Visit(elem.expression());
+            else if (elem.enumValue() != null)
+                init.Fields[name] = VisitEnumValue(elem.enumValue());
+            else if (elem.arrayInit() != null)
+                init.Fields[name] = (STExpression)Visit(elem.arrayInit());
+            else if (elem.structInit() != null)
+                init.Fields[name] = (STExpression)VisitStructInit(elem.structInit());
+            else if (elem.referenceValue() != null)
+                init.Fields[name] = new STLiteral { Value = elem.referenceValue().GetText() };
+        }
+        return init;
     }
 
     // ZMIENNE 
@@ -86,7 +584,7 @@ public class STTreeBuilder : stBaseVisitor<object>
                     variables.Add(new STVariable
                     {
                         Name = variableName,
-                        Type = new STNamedType { Name = context.simpleSpecificationInit().simpleSpecification().GetText() },
+                        Type = VisitSimpleSpecification(context.simpleSpecificationInit().simpleSpecification()),
                         InitialValue = (STExpression)Visit(context.simpleSpecificationInit().simpleInit().expression())
                     });
                 }
@@ -95,7 +593,7 @@ public class STTreeBuilder : stBaseVisitor<object>
                     variables.Add(new STVariable
                     {
                         Name = variableName,
-                        Type = new STNamedType { Name = context.simpleSpecificationInit().simpleSpecification().GetText() }
+                        Type = VisitSimpleSpecification(context.simpleSpecificationInit().simpleSpecification())
                     });
                 }
             }
@@ -104,8 +602,25 @@ public class STTreeBuilder : stBaseVisitor<object>
         {
             variables.AddRange(VisitArrayVarDeclarationInit(context.arrayVarDeclarationInit()));
         }
-        
+
         return variables;
+    }
+
+    public override STNamedType VisitSimpleSpecification(stParser.SimpleSpecificationContext context)
+    {
+        if (context.derivedTypeAccess() != null)
+            return VisitDerivedTypeAccess(context.derivedTypeAccess());
+        else
+            return new STNamedType { Name = context.elementaryTypeName().GetText() };
+    }
+
+    public override STVariable VisitSimpleSpecificationInit(stParser.SimpleSpecificationInitContext context)
+    {
+        return new STVariable
+        {
+            Type = VisitSimpleSpecification(context.simpleSpecification()),
+            InitialValue = (STExpression)Visit(context.simpleInit().expression())
+        };
     }
 
     // Deklaracja zmiennych tablicowych
@@ -424,7 +939,7 @@ public class STTreeBuilder : stBaseVisitor<object>
     {
         return new STContinue();
     }
-    
+
     // SUPER()
     public override STSuperCall VisitSuperCallStatement(stParser.SuperCallStatementContext context)
     {
