@@ -6,7 +6,7 @@
 // Klasy reprezentujące elementy drzewa składniowego oraz ich odwiedzanie
 #load "stEntities.cs"
 #load "stTreeBuilder.cs"
-//#load "astPrinter.cs"
+#load "astPrinter.cs"
 
 #r "nuget: Antlr4.Runtime.Standard, 4.13.0"
 
@@ -40,12 +40,14 @@ if (!File.Exists(filePath))
 
 // Prosty kod do testów budowy drzewa
 var inputCode = @"
-FUNCTION mojaFunkcja : BOOL
-    VAR_INPUT
-        x : ARRAY[1..2, 3..4] OF REAL;
-    END_VAR
-    RETURN;
-END_FUNCTION
+TYPE RobotConfig :
+STRUCT
+    Name     : STRING[20] := 'Default';
+    Enabled  : BOOL := TRUE;
+    Speed    : INT := 100;
+    Limits   : ARRAY[1..3] OF INT := [100, 2(200)];
+END_STRUCT;
+END_TYPE
 ";
 
 // Parsowanie
@@ -60,10 +62,10 @@ var tree = parser.file();
 
 //Budowa drzewa składniowego
 var treeBuilder = new STTreeBuilder();
-//var file = (STFile)treeBuilder.Visit(tree);
+var file = (STFile)treeBuilder.Visit(tree);
 
-//var printer = new ASTPrinter();
-//printer.Print(file);
+// Własna wizualizacja abstrakcyjnego drzewa składniowego
+ASTPrinter.PrintAST(file);
 
 var dot = ToDot(tree, parser);
 File.WriteAllText("tree.dot", dot);

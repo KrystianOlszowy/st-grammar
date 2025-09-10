@@ -18,6 +18,12 @@ public class STTreeBuilder : stBaseVisitor<object>
                 file.Declarations.Add(declaration);
         }
 
+        foreach (var typeDecl in context.dataTypeDeclaration())
+        {
+            if (Visit(typeDecl) is List<STTypeDeclaration> typeDeclaration)
+                file.Declarations.AddRange(typeDeclaration);
+        }
+
         return file;
     }
 
@@ -41,6 +47,51 @@ public class STTreeBuilder : stBaseVisitor<object>
                 program.Variables.AddRange(VisitNormalVarDeclarations(normalVarDeclarations));
             }
         }
+        
+        // deklaracje zmiennych wejścia/wyjścia
+        if (context.ioVarDeclarations() != null)
+        {
+            foreach (var ioVarDeclarations in context.ioVarDeclarations())
+            {
+                program.Variables.AddRange(VisitIoVarDeclarations(ioVarDeclarations));
+            }
+        }
+
+        // deklaracje zmiennych zewnętrznych
+        if (context.externalVarDeclarations() != null)
+        {
+            foreach (var externalVarDeclarations in context.externalVarDeclarations())
+            {
+                program.Variables.AddRange(VisitExternalVarDeclarations(externalVarDeclarations));
+            }
+        }
+
+        // deklaracje zmiennych tymczasowych
+        if (context.tempVarDeclarations() != null)
+        {
+            foreach (var tempVarDeclarations in context.tempVarDeclarations())
+            {
+                program.Variables.AddRange(VisitTempVarDeclarations(tempVarDeclarations));
+            }
+        }
+
+        // zmienne adersowane
+        if (context.locatedVarDeclarations() != null)
+        {
+            foreach (var locatedVarDeclarations in context.locatedVarDeclarations())
+            {
+                program.Variables.AddRange(VisitLocatedVarDeclarations(locatedVarDeclarations));
+            }
+        }
+
+        // pozostałe typy zmiennych
+        if (context.otherVarDeclarations() != null)
+        {
+            foreach (var otherVarDeclarations in context.otherVarDeclarations())
+            {
+                program.Variables.AddRange(VisitOtherVarDeclarations(otherVarDeclarations));
+            }
+        }
 
         if (context.programBody() != null)
         {
@@ -53,13 +104,13 @@ public class STTreeBuilder : stBaseVisitor<object>
     // Deklaracje zmiennych wejścia/wyjścia
     public override List<STVariable> VisitIoVarDeclarations(stParser.IoVarDeclarationsContext context)
     {
-        if (context.inputVarDeclarations() == null)
+        if (context.inputVarDeclarations() != null)
             return VisitInputVarDeclarations(context.inputVarDeclarations());
 
-        if (context.outputVarDeclarations() == null)
+        if (context.outputVarDeclarations() != null)
             return VisitOutputVarDeclarations(context.outputVarDeclarations());
 
-        if (context.inOutVarDeclarations() == null)
+        if (context.inOutVarDeclarations() != null)
             return VisitInOutVarDeclarations(context.inOutVarDeclarations());
 
         return null;
@@ -564,8 +615,17 @@ public class STTreeBuilder : stBaseVisitor<object>
         foreach (var declaration in context.varDeclarationInit())
         {
             variables.AddRange(VisitVarDeclarationInit(declaration));
-        }
 
+        }
+        foreach(var variable in variables)
+        {
+            if (context.accessSpecification() != null)
+            {
+                variable.AccessType = context.accessSpecification().GetText();
+            }
+            if (context.CONSTANT() != null)
+                variable.IsConstant = true;
+        }
         return variables;
     }
 
@@ -636,7 +696,7 @@ public class STTreeBuilder : stBaseVisitor<object>
                 {
                     Name = variableName,
                     Type = VisitArraySpecification(context.arraySpecificationInit().arraySpecification()),
-                    InitialValue = (STExpression)Visit(context.arraySpecificationInit().arrayInit())
+                    InitialValue = VisitArrayInit(context.arraySpecificationInit().arrayInit())
                 });
             }
             else // Deklaracja bez inicjalizacji
@@ -651,6 +711,39 @@ public class STTreeBuilder : stBaseVisitor<object>
 
         return variables;
     }
+
+public override STArrayInitializer VisitArrayInit(stParser.ArrayInitContext context)
+{
+    var init = new STArrayInitializer();
+
+    foreach (var elemCtx in context.arrayElementInit())
+    {
+        init.Elements.Add(VisitArrayElementInit(elemCtx));
+    }
+
+    return init;
+}
+
+public override STArrayElementInit VisitArrayElementInit(stParser.ArrayElementInitContext context)
+{
+    if (context.arrayElementMultiplier() != null) // np. 3(0)
+    {
+        return new STArrayElementRepeated
+        {
+            Multiplier = int.Parse(context.arrayElementMultiplier().GetText()),
+            Value = context.arrayElementInitValue() != null 
+                ? (STExpression)Visit(context.arrayElementInitValue()) 
+                : null
+        };
+    }
+    else
+    {
+        return new STArrayElementValue
+        {
+            Value = (STExpression)Visit(context.arrayElementInitValue())
+        };
+    }
+}
 
     // Określenie typu tablicy
     public override STType VisitArraySpecification(stParser.ArraySpecificationContext context)
@@ -806,7 +899,7 @@ public class STTreeBuilder : stBaseVisitor<object>
         };
     }
 
-    // Wyrażenie warunkowe IF-ELSIF-ELSE
+    // Wyrażenie warunkowe IF
     public override STIf VisitIfStatement(stParser.IfStatementContext context)
     {
         var ifStmt = new STIf
@@ -815,20 +908,16 @@ public class STTreeBuilder : stBaseVisitor<object>
             ThenBranch = VisitStatementList(context.ifStatementList().statementList())
         };
 
-        //ELSIF
         for (int i = 0; i < context.ELSIF().Length; i++)
         {
-
             ifStmt.ElseIfBranches.Add(((STExpression)Visit(context.elsifCondition(i).expression()),
                                         VisitStatementList(context.elsifStatementList(i).statementList())));
         }
 
-        // ELSE
         if (context.ELSE() != null)
         {
             ifStmt.ElseBranch.AddRange(VisitStatementList(context.elseStatementList().statementList()));
         }
-
         return ifStmt;
     }
 
@@ -970,6 +1059,12 @@ public class STTreeBuilder : stBaseVisitor<object>
             return new STLiteral { Value = Visit(context.referenceValue()) };
 
         return null;
+    }
+
+    // Wyrażenia zawarte w nawiasach
+    public override STExpression VisitBracketedExpression(stParser.BracketedExpressionContext constext)
+    {
+        return (STExpression)Visit(constext.expression());
     }
 
     // wywołanie funkcji

@@ -67,7 +67,7 @@ public class STVariable : STDeclaration
 
     public bool IsRetain { get; set; }
 
-    public bool AccessType { get; set; }
+    public string AccessType { get; set; }
 
     public bool IsTemporary { get; set; }
 
@@ -119,7 +119,20 @@ public class STSubrange : STExpression
 
 public class STArrayInitializer : STExpression
 {
-    public List<STExpression> Values { get; set; } = new();
+    public List<STArrayElementInit> Elements { get; set; } = new();
+}
+
+public abstract class STArrayElementInit : STEntity { }
+
+public class STArrayElementValue : STArrayElementInit
+{
+    public STExpression Value { get; set; }
+}
+
+public class STArrayElementRepeated : STArrayElementInit
+{
+    public int Multiplier { get; set; }
+    public STExpression Value { get; set; }
 }
 
 public class STStructInit : STExpression
@@ -207,14 +220,14 @@ public abstract class STExpression : STEntity { }
 // Wyrażenie z operatorem jednoargumentowym
 public class STUnaryExpression : STExpression
 {
-    public string Operator { get; set; } // np. "-", "NOT"
+    public string Operator { get; set; }
     public STExpression Operand { get; set; }
 }
 
 // Wyrażenie z operatorami 2 argumentowymi
 public class STBinaryExpression : STExpression
 {
-    public string Operator { get; set; } // "+", "-", "*", "/", AND, OR, XOR, =
+    public string Operator { get; set; }
     public STExpression Left { get; set; }
     public STExpression Right { get; set; }
 }
