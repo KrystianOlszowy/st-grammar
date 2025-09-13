@@ -91,6 +91,7 @@ public class STArrayVariable : STVariable
     public STArrayInitializer Initializer { get; set; }
 }
 
+// TYPY DANYCH I ELEMENTY DEKLARACJI //
 public class STArrayType : STType
 {
     public List<STSubrange> Dimensions { get; set; } = new();
@@ -140,7 +141,7 @@ public class STStructInit : STExpression
     public Dictionary<string, STExpression> Fields { get; set; } = new();
 }
 
-// INSTRUKCJE
+// INSTRUKCJE //
 public abstract class STStatement : STEntity { }
 
 // Instrukcja przypisania
@@ -214,7 +215,7 @@ public class STContinue : STStatement { }
 // EXIT
 public class STExit : STStatement { }
 
-// Wyrażenia //
+// WYRAŻENIA //
 public abstract class STExpression : STEntity { }
 
 // Wyrażenie z operatorem jednoargumentowym

@@ -4,7 +4,8 @@ using Antlr4.Runtime.Tree;
 
 public class STTreeBuilder : stBaseVisitor<object>
 {
-    // Cały plik //
+
+    // REGUŁA STARTOWA //
     public override STFile VisitFile(stParser.FileContext context)
     {
         var file = new STFile
@@ -28,8 +29,6 @@ public class STTreeBuilder : stBaseVisitor<object>
     }
 
     // DEKLARACJE //
-
-    // PROGRAM
     public override STProgram VisitProgramDeclaration(stParser.ProgramDeclarationContext context)
     {
         var program = new STProgram
@@ -39,7 +38,6 @@ public class STTreeBuilder : stBaseVisitor<object>
             Body = new List<STStatement>()
         };
 
-        // deklaracje zmiennych lokalnych dla programu
         if (context.normalVarDeclarations() != null)
         {
             foreach (var normalVarDeclarations in context.normalVarDeclarations())
@@ -47,8 +45,7 @@ public class STTreeBuilder : stBaseVisitor<object>
                 program.Variables.AddRange(VisitNormalVarDeclarations(normalVarDeclarations));
             }
         }
-        
-        // deklaracje zmiennych wejścia/wyjścia
+
         if (context.ioVarDeclarations() != null)
         {
             foreach (var ioVarDeclarations in context.ioVarDeclarations())
@@ -57,7 +54,6 @@ public class STTreeBuilder : stBaseVisitor<object>
             }
         }
 
-        // deklaracje zmiennych zewnętrznych
         if (context.externalVarDeclarations() != null)
         {
             foreach (var externalVarDeclarations in context.externalVarDeclarations())
@@ -66,7 +62,6 @@ public class STTreeBuilder : stBaseVisitor<object>
             }
         }
 
-        // deklaracje zmiennych tymczasowych
         if (context.tempVarDeclarations() != null)
         {
             foreach (var tempVarDeclarations in context.tempVarDeclarations())
@@ -75,7 +70,6 @@ public class STTreeBuilder : stBaseVisitor<object>
             }
         }
 
-        // zmienne adersowane
         if (context.locatedVarDeclarations() != null)
         {
             foreach (var locatedVarDeclarations in context.locatedVarDeclarations())
@@ -84,7 +78,6 @@ public class STTreeBuilder : stBaseVisitor<object>
             }
         }
 
-        // pozostałe typy zmiennych
         if (context.otherVarDeclarations() != null)
         {
             foreach (var otherVarDeclarations in context.otherVarDeclarations())
@@ -101,7 +94,6 @@ public class STTreeBuilder : stBaseVisitor<object>
         return program;
     }
 
-    // Deklaracje zmiennych wejścia/wyjścia
     public override List<STVariable> VisitIoVarDeclarations(stParser.IoVarDeclarationsContext context)
     {
         if (context.inputVarDeclarations() != null)
@@ -116,7 +108,6 @@ public class STTreeBuilder : stBaseVisitor<object>
         return null;
     }
 
-    // Deklaracje zmiennych wejścia
     public override List<STVariable> VisitInputVarDeclarations(stParser.InputVarDeclarationsContext context)
     {
         var variables = new List<STVariable>();
@@ -158,7 +149,6 @@ public class STTreeBuilder : stBaseVisitor<object>
         }
     }
 
-    // Deklaracje zmiennych wyjścia
     public override List<STVariable> VisitOutputVarDeclarations(stParser.OutputVarDeclarationsContext context)
     {
         var variables = new List<STVariable>();
@@ -197,7 +187,6 @@ public class STTreeBuilder : stBaseVisitor<object>
         }
     }
 
-    // Deklaracje zmiennych wejścia/wyjścia
     public override List<STVariable> VisitInOutVarDeclarations(stParser.InOutVarDeclarationsContext context)
     {
         var variables = new List<STVariable>();
@@ -231,7 +220,6 @@ public class STTreeBuilder : stBaseVisitor<object>
         }
     }
 
-    // Deklaracje zmiennych tymczasowych
     public override List<STVariable> VisitTempVarDeclarations(stParser.TempVarDeclarationsContext context)
     {
         var variables = new List<STVariable>();
@@ -249,7 +237,6 @@ public class STTreeBuilder : stBaseVisitor<object>
         return variables;
     }
 
-    // Deklaracje zmiennych zewnętrznych
     public override List<STVariable> VisitExternalVarDeclarations(stParser.ExternalVarDeclarationsContext context)
     {
         var variables = new List<STVariable>();
@@ -283,7 +270,6 @@ public class STTreeBuilder : stBaseVisitor<object>
         return externalVar;
     }
 
-    // Deklaracje 
     public override List<STVariable> VisitLocatedVarDeclarations(stParser.LocatedVarDeclarationsContext context)
     {
         var variables = new List<STVariable>();
@@ -349,8 +335,6 @@ public class STTreeBuilder : stBaseVisitor<object>
         return context.relativeAddress() != null ? context.relativeAddress().GetText() : context.partlySpecifiedAddress().GetText();
     }
 
-
-    // Deklaracje pozostałych zmiennych
     public override List<STVariable> VisitOtherVarDeclarations(stParser.OtherVarDeclarationsContext context)
     {
         if (context.retainVarDeclarations() != null)
@@ -473,7 +457,6 @@ public class STTreeBuilder : stBaseVisitor<object>
             return new List<STStatement>();
     }
 
-    // Deklaracje typów użytkownika
     public override List<STTypeDeclaration> VisitDataTypeDeclaration(stParser.DataTypeDeclarationContext context)
     {
         var decls = new List<STTypeDeclaration>();
@@ -487,7 +470,6 @@ public class STTreeBuilder : stBaseVisitor<object>
         return decls;
     }
 
-    // Deklaracje struktur
     public override STStructTypeDeclaration VisitStructTypeDeclaration(stParser.StructTypeDeclarationContext context)
     {
 
@@ -607,7 +589,6 @@ public class STTreeBuilder : stBaseVisitor<object>
         return init;
     }
 
-    // ZMIENNE 
     public override List<STVariable> VisitNormalVarDeclarations(stParser.NormalVarDeclarationsContext context)
     {
         var variables = new List<STVariable>();
@@ -683,7 +664,6 @@ public class STTreeBuilder : stBaseVisitor<object>
         };
     }
 
-    // Deklaracja zmiennych tablicowych
     public override List<STVariable> VisitArrayVarDeclarationInit(stParser.ArrayVarDeclarationInitContext context)
     {
         var variables = new List<STVariable>();
@@ -699,7 +679,7 @@ public class STTreeBuilder : stBaseVisitor<object>
                     InitialValue = VisitArrayInit(context.arraySpecificationInit().arrayInit())
                 });
             }
-            else // Deklaracja bez inicjalizacji
+            else
             {
                 variables.Add(new STVariable
                 {
@@ -712,40 +692,40 @@ public class STTreeBuilder : stBaseVisitor<object>
         return variables;
     }
 
-public override STArrayInitializer VisitArrayInit(stParser.ArrayInitContext context)
-{
-    var init = new STArrayInitializer();
-
-    foreach (var elemCtx in context.arrayElementInit())
+    public override STArrayInitializer VisitArrayInit(stParser.ArrayInitContext context)
     {
-        init.Elements.Add(VisitArrayElementInit(elemCtx));
-    }
+        var init = new STArrayInitializer();
 
-    return init;
-}
-
-public override STArrayElementInit VisitArrayElementInit(stParser.ArrayElementInitContext context)
-{
-    if (context.arrayElementMultiplier() != null) // np. 3(0)
-    {
-        return new STArrayElementRepeated
+        foreach (var elemCtx in context.arrayElementInit())
         {
-            Multiplier = int.Parse(context.arrayElementMultiplier().GetText()),
-            Value = context.arrayElementInitValue() != null 
-                ? (STExpression)Visit(context.arrayElementInitValue()) 
-                : null
-        };
-    }
-    else
-    {
-        return new STArrayElementValue
-        {
-            Value = (STExpression)Visit(context.arrayElementInitValue())
-        };
-    }
-}
+            init.Elements.Add(VisitArrayElementInit(elemCtx));
+        }
 
-    // Określenie typu tablicy
+        return init;
+    }
+
+    public override STArrayElementInit VisitArrayElementInit(stParser.ArrayElementInitContext context)
+    {
+        if (context.arrayElementMultiplier() != null)
+        {
+            return new STArrayElementRepeated
+            {
+                Multiplier = int.Parse(context.arrayElementMultiplier().GetText()),
+                Value = context.arrayElementInitValue() != null 
+                    ? (STExpression)Visit(context.arrayElementInitValue()) 
+                    : null
+            };
+        }
+        else
+        {
+            return new STArrayElementValue
+            {
+                Value = (STExpression)Visit(context.arrayElementInitValue())
+            };
+        }
+    }
+
+
     public override STType VisitArraySpecification(stParser.ArraySpecificationContext context)
     {
         if (context.subrange() != null)
@@ -776,7 +756,6 @@ public override STArrayElementInit VisitArrayElementInit(stParser.ArrayElementIn
             return VisitDerivedTypeAccess(context.derivedTypeAccess());
     }
 
-    // Dostęp do zmiennej tworzonej przez użytkownika lub biblioteki
     public override STNamedType VisitDerivedTypeAccess(stParser.DerivedTypeAccessContext context)
     {
         var namedType = new STNamedType { Name = context.derivedTypeName().GetText() };
@@ -787,7 +766,6 @@ public override STArrayElementInit VisitArrayElementInit(stParser.ArrayElementIn
         return namedType;
     }
 
-    // Lista zmiennych przy tworzeniu zmiennych np. VAR x, y, z : INT;
     public override List<string> VisitVariableList(stParser.VariableListContext context)
     {
         var names = new List<string>();
@@ -812,7 +790,6 @@ public override STArrayElementInit VisitArrayElementInit(stParser.ArrayElementIn
         return statements;
     }
 
-    // Przypisanie
     public override STAssignment VisitAssignStatement(stParser.AssignStatementContext context)
     {
         return new STAssignment
@@ -823,7 +800,6 @@ public override STArrayElementInit VisitArrayElementInit(stParser.ArrayElementIn
         };
     }
 
-    // Dostęp do zmiennej
     public override STVariableAccess VisitVariable(stParser.VariableContext context)
     {
         if (context.directVariable() != null)
@@ -840,7 +816,6 @@ public override STArrayElementInit VisitArrayElementInit(stParser.ArrayElementIn
         return null;
     }
 
-    // Dostęp do zmiennej symbolicznej
     public override STVariableAccess VisitSymbolicVariable(stParser.SymbolicVariableContext context)
     {
         var varAccess = new STVariableAccess
@@ -899,7 +874,6 @@ public override STArrayElementInit VisitArrayElementInit(stParser.ArrayElementIn
         };
     }
 
-    // Wyrażenie warunkowe IF
     public override STIf VisitIfStatement(stParser.IfStatementContext context)
     {
         var ifStmt = new STIf
@@ -921,7 +895,6 @@ public override STArrayElementInit VisitArrayElementInit(stParser.ArrayElementIn
         return ifStmt;
     }
 
-    // Wyrazenie warunkowe CASE
     public override STCase VisitCaseStatement(stParser.CaseStatementContext context)
     {
         var caseStmt = new STCase
@@ -943,19 +916,16 @@ public override STArrayElementInit VisitArrayElementInit(stParser.ArrayElementIn
         return caseStmt;
     }
 
-    // etykiety dla CASE
     public override STCaseSelection VisitCaseSelection(stParser.CaseSelectionContext context)
     {
         var selection = new STCaseSelection();
 
-        // Etykiety
         foreach (var labelCtx in context.caseList().caseListElement())
         {
             var label = (STExpression)Visit(labelCtx);
             selection.Labels.Add(label);
         }
 
-        // Instrukcje
         selection.Body.AddRange(VisitStatementList(context.statementList()));
 
         return selection;
@@ -982,7 +952,6 @@ public override STArrayElementInit VisitArrayElementInit(stParser.ArrayElementIn
         };
     }
 
-    // Pętla WHILE
     public override STWhile VisitWhileStatement(stParser.WhileStatementContext context)
     {
         return new STWhile
@@ -992,7 +961,6 @@ public override STArrayElementInit VisitArrayElementInit(stParser.ArrayElementIn
         };
     }
 
-    // Pętla FOR
     public override STFor VisitForStatement(stParser.ForStatementContext context)
     {
         return new STFor
@@ -1007,7 +975,6 @@ public override STArrayElementInit VisitArrayElementInit(stParser.ArrayElementIn
         };
     }
 
-    // Pętla REPEAT
     public override STRepeat VisitRepeatStatement(stParser.RepeatStatementContext context)
     {
         return new STRepeat
@@ -1017,33 +984,27 @@ public override STArrayElementInit VisitArrayElementInit(stParser.ArrayElementIn
         };
     }
 
-    // EXIT
     public override STExit VisitExitStatement(stParser.ExitStatementContext context)
     {
         return new STExit();
     }
 
-    // CONTINUE
     public override STContinue VisitContinueStatement(stParser.ContinueStatementContext context)
     {
         return new STContinue();
     }
 
-    // SUPER()
     public override STSuperCall VisitSuperCallStatement(stParser.SuperCallStatementContext context)
     {
         return new STSuperCall();
     }
 
-    // RETURN <wyrażenie>
     public override STReturn VisitReturnStatement(stParser.ReturnStatementContext context)
     {
         return new STReturn();
     }
 
-
     // WYRAŻENIA //
-    // Wyrażenia podstawowe
     public override STExpression VisitPrimaryExpression(stParser.PrimaryExpressionContext context)
     {
         if (context.literalValue() != null)
@@ -1061,13 +1022,11 @@ public override STArrayElementInit VisitArrayElementInit(stParser.ArrayElementIn
         return null;
     }
 
-    // Wyrażenia zawarte w nawiasach
     public override STExpression VisitBracketedExpression(stParser.BracketedExpressionContext constext)
     {
         return (STExpression)Visit(constext.expression());
     }
 
-    // wywołanie funkcji
     public override STFunctionCall VisitFunctionCall(stParser.FunctionCallContext context)
     {
         var call = new STFunctionCall
@@ -1087,7 +1046,6 @@ public override STArrayElementInit VisitArrayElementInit(stParser.ArrayElementIn
         return call;
     }
 
-    // Parametry wywołania POU
     public override STPouParameter VisitParameterAssign(stParser.ParameterAssignContext context)
     {
         var param = new STPouParameter();
@@ -1111,7 +1069,6 @@ public override STArrayElementInit VisitArrayElementInit(stParser.ArrayElementIn
         return param;
     }
 
-    // Literał enumeracyjny
     public override STEnumValue VisitEnumValue(stParser.EnumValueContext context)
     {
         var enumValue = new STEnumValue();
@@ -1133,7 +1090,6 @@ public override STArrayElementInit VisitArrayElementInit(stParser.ArrayElementIn
         };
     }
 
-    // Wyrażenie z operatorem jednoargumentowym
     public override STUnaryExpression VisitUnaryExpression(stParser.UnaryExpressionContext context)
     {
         return new STUnaryExpression
@@ -1143,7 +1099,6 @@ public override STArrayElementInit VisitArrayElementInit(stParser.ArrayElementIn
         };
     }
 
-    // Wyrażenia z operatorami 2 argumentowymi
     public override STBinaryExpression VisitExponentExpression(stParser.ExponentExpressionContext context)
     {
         return new STBinaryExpression

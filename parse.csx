@@ -27,17 +27,6 @@ public class CaseInsensitiveInputStream : AntlrInputStream
     }
 }
 
-var filePath = "test.st"; 
-
-if (!File.Exists(filePath))
-{
-    Console.WriteLine($" Plik '{filePath}' nie istnieje.");
-    return;
-}
-
-
-//var inputCode = File.ReadAllText(filePath);
-
 // Prosty kod do testów budowy drzewa
 var inputCode = @"
 TYPE RobotConfig :
